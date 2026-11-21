@@ -113,7 +113,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-cream/75">
               {reveal.revealed
-                ? "Replay the cards any time to see their bio and song."
+                ? "Replay the cards any time to see their card and bio."
                 : "Draw your card to find out who you're gifting. Make sure nobody is looking at your screen."}
             </p>
             <Link href={`/groups/${id}/reveal`} className={`mt-5 ${buttonClass("primary", { size: "lg" })}`}>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BackButton } from "@/components/back-button";
-import { SongPlayer } from "@/components/song-player";
+import { playRevealSound } from "@/lib/sound";
 import type { RevealView } from "@/server/groups";
 import { revealAction } from "../../../actions";
 import { mountTarot, type TarotHandle, type TarotPerson, type TarotPhase } from "./engine";
@@ -80,6 +80,7 @@ export function TarotReveal({
       },
       onError: setError,
       onAnnounce: setAnnouncement,
+      onFlip: playRevealSound,
     });
     handleRef.current = handle;
     return () => {
@@ -159,10 +160,6 @@ export function TarotReveal({
             <section>
               <h2>About {firstName}</h2>
               {view.receiver.bio ? <p>{view.receiver.bio}</p> : <p className="tr-muted">No bio yet.</p>}
-            </section>
-            <section>
-              <h2>Their song</h2>
-              {view.receiver.song ? <SongPlayer song={view.receiver.song} /> : <p className="tr-muted">No song picked yet.</p>}
             </section>
           </>
         )}

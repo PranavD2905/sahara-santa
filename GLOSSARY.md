@@ -33,7 +33,7 @@ _Avoid_: Finished, expired
 ### Profile
 
 **Profile**:
-A person's identity across all Groups: display name, Profile Picture, Bio, and Song.
+A person's identity across all Groups: display name, Profile Picture, and Bio.
 _Avoid_: Account (that is the sign-in, not the identity)
 
 **Profile Picture**:
@@ -43,10 +43,6 @@ _Avoid_: Avatar, photo
 **Bio**:
 A short plain-text description on the Profile, up to 150 characters.
 _Avoid_: About, description
-
-**Song**:
-A track the person picks on their Profile. Only their Santa hears it, and only after the Draw.
-_Avoid_: Anthem, theme song
 
 **Override**:
 A Group-specific replacement of a Member's Profile Picture or Bio by the Organizer, leaving the Profile itself unchanged.

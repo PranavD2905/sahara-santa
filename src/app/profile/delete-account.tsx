@@ -46,7 +46,7 @@ export function DeleteAccount() {
       <ConfirmDialog
         open={asking}
         title="Delete your account?"
-        body="You'll leave every Group and your profile, picture and song are deleted. This can't be undone."
+        body="You'll leave every Group and your profile and picture are deleted. This can't be undone."
         confirmLabel="Delete my account"
         tone="danger"
         onCancel={() => setAsking(false)}

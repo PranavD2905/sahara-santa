@@ -11,13 +11,6 @@ export interface ProfileView {
   username: string | null;
   image: string | null;
   bio: string | null;
-  song: {
-    trackId: string;
-    title: string | null;
-    artist: string | null;
-    artworkUrl: string | null;
-    explicit: boolean;
-  } | null;
 }
 
 export async function getProfile(db: AppDb, userId: string): Promise<ProfileView> {
@@ -28,15 +21,6 @@ export async function getProfile(db: AppDb, userId: string): Promise<ProfileView
     username: u.displayUsername ?? u.username,
     image: u.image,
     bio: u.bio,
-    song: u.songTrackId
-      ? {
-          trackId: u.songTrackId,
-          title: u.songTitle,
-          artist: u.songArtist,
-          artworkUrl: u.songArtworkUrl,
-          explicit: u.songExplicit ?? false,
-        }
-      : null,
   };
 }
 
@@ -57,29 +41,6 @@ export async function updateProfile(
   await db
     .update(user)
     .set({ name, bio: bio === "" ? null : bio, updatedAt: new Date() })
-    .where(eq(user.id, userId));
-}
-
-export interface SongChoice {
-  trackId: string;
-  title: string;
-  artist: string;
-  artworkUrl: string | null;
-  explicit: boolean;
-}
-
-/** `song` must come from a server-side catalog lookup, never the client. */
-export async function setSong(db: AppDb, userId: string, song: SongChoice | null): Promise<void> {
-  await db
-    .update(user)
-    .set({
-      songTrackId: song?.trackId ?? null,
-      songTitle: song?.title ?? null,
-      songArtist: song?.artist ?? null,
-      songArtworkUrl: song?.artworkUrl ?? null,
-      songExplicit: song?.explicit ?? null,
-      updatedAt: new Date(),
-    })
     .where(eq(user.id, userId));
 }
 

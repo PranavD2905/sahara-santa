@@ -629,8 +629,7 @@ export interface GroupView {
 }
 
 /**
- * The Group as one Member sees it. Never includes Songs (hidden until the
- * Santa's Reveal) and never includes Assignments (ADR 0002).
+ * The Group as one Member sees it. Never includes Assignments (ADR 0002).
  */
 export async function getGroupView(
   db: AppDb,
@@ -730,13 +729,6 @@ export interface RevealView {
     name: string;
     image: string | null;
     bio: string | null;
-    song: {
-      trackId: string;
-      title: string | null;
-      artist: string | null;
-      artworkUrl: string | null;
-      explicit: boolean;
-    } | null;
   };
 }
 
@@ -769,11 +761,6 @@ export async function revealMyAssignment(
       name: user.name,
       image: user.image,
       bio: user.bio,
-      songTrackId: user.songTrackId,
-      songTitle: user.songTitle,
-      songArtist: user.songArtist,
-      songArtworkUrl: user.songArtworkUrl,
-      songExplicit: user.songExplicit,
       pictureOverrideUrl: groupMember.pictureOverrideUrl,
       bioHidden: groupMember.bioHidden,
     })
@@ -801,15 +788,6 @@ export async function revealMyAssignment(
       name: r.name,
       image: r.pictureOverrideUrl ?? r.image,
       bio: r.bioHidden ? null : r.bio,
-      song: r.songTrackId
-        ? {
-            trackId: r.songTrackId,
-            title: r.songTitle,
-            artist: r.songArtist,
-            artworkUrl: r.songArtworkUrl,
-            explicit: r.songExplicit ?? false,
-          }
-        : null,
     },
   };
 }

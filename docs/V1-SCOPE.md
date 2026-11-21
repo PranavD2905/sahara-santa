@@ -9,7 +9,7 @@ Answers you did not change during the design interview were taken as accepted.
 - Neon Postgres via the Vercel Marketplace
 - Better Auth: **username + password**, no email at all (ADR 0004); rate-limited sign-in and sign-up
 - Vercel Blob for Profile Pictures (direct client upload)
-- iTunes Search API for Songs (see ADR 0003)
+- Site-wide background music (`public/audio/background.mp3`) with a mute button, plus a synthesized Reveal sound
 - Responsive web, laptop-first, then mobile. **Functional-first, basic UI.** Polish (the warm desert theme) comes after the functionality works.
 
 ## Accounts and Profile
@@ -18,7 +18,6 @@ Answers you did not change during the design interview were taken as accepted.
 - Forgotten password: the Group's Organizer sets a temporary password for that Member in Group Settings (signs them out everywhere).
 - Profile Picture is optional (initials by default). Instagram-style crop with pan and zoom, stored as a 512×512 WebP, shown as a circle. JPG, PNG or WebP up to 5 MB. EXIF is stripped, and the old file is deleted on replace or account deletion.
 - Bio is up to 150 characters of plain text.
-- Song is optional and global to the Profile. It is hidden from everyone until the Draw, then only the Santa hears it, and the owner sees their own. Tap to play a 30-second preview, no autoplay, with an "E" badge for explicit tracks.
 - Pictures are served only to signed-in users who share a Group with that person.
 
 ## Groups
@@ -30,14 +29,14 @@ Answers you did not change during the design interview were taken as accepted.
 - Budget: one min–max range per Group in INR, USD, EUR or GBP (default INR), not enforced.
 - Exchange Date is optional until the Draw, required before it, and editable after.
 - Lifecycle: Open → Joining Closed (manual, Organizer's choice) → Drawn → Archived (read-only 30 days after the Exchange Date, deleted after 1 year).
-- Organizer Overrides: the Organizer can replace a Member's Profile Picture or hide their Bio inside that Group only. The Member sees that an Override is in place. There is no Song override.
+- Organizer Overrides: the Organizer can replace a Member's Profile Picture or hide their Bio inside that Group only. The Member sees that an Override is in place.
 
 ## Draw
 
 - Two separate steps: the Organizer closes joining, adds Exclusions, then clicks Draw.
 - The Draw is a single loop through all Members that respects Exclusions (ADR 0001). It is blocked with a clear message if Exclusions make it impossible.
 - The Organizer never sees Assignments (ADR 0002).
-- Reveal: a Member taps "Reveal my person", then can view their receiver's card any time. The card shows picture, name, bio and the song player. A Member can't re-roll their own Assignment.
+- Reveal: a Member taps "Reveal my person", then can view their receiver's card any time. The card shows picture, name and bio, with a chime as it flips. A Member can't re-roll their own Assignment.
 - Organizer dashboard: Members, Joining toggle, Exclusions editor, Draw, Re-draw, Invite Link reset, ownership transfer, and "revealed / not yet revealed" per Member.
 - Re-draw is allowed before the Exchange Date.
 
@@ -57,7 +56,7 @@ None (ADR 0004). Invites are shared as a link or code (e.g. on WhatsApp). Draw, 
 
 ## Explicitly out of scope for v1
 
-Wishlists, anonymous chat, reminders, member-joined emails, report buttons, automated image scanning, song override, co-Organizers, public Group discovery, native apps, assignment encryption, and the visual theme.
+Wishlists, anonymous chat, reminders, member-joined emails, report buttons, automated image scanning, per-person songs, co-Organizers, public Group discovery, native apps, assignment encryption, and the visual theme.
 
 ## Quality bar
 
@@ -66,5 +65,5 @@ Wishlists, anonymous chat, reminders, member-joined emails, report buttons, auto
 
 ## Before launch
 
-- Re-check the iTunes preview terms.
+- Add the background track at `public/audio/background.mp3`.
 - Write the FAQ, including the privacy statement.

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { AppDb } from "./db-types";
 import { createGroup, joinByCode } from "./groups";
 import { canViewPicture, parsePicturePath, pathFromUrl } from "./picture-paths";
-import { getProfile, setSong, updateProfile } from "./profile";
+import { getProfile, updateProfile } from "./profile";
 import { createTestDb, createUser } from "./test-db";
 
 let db: AppDb;
@@ -74,11 +74,4 @@ describe("profile", () => {
     expect((await getProfile(db, u)).bio).toBeNull();
   });
 
-  it("sets and clears the Song", async () => {
-    const u = await createUser(db);
-    await setSong(db, u, { trackId: "1", title: "T", artist: "A", artworkUrl: null, explicit: true });
-    expect((await getProfile(db, u)).song).toMatchObject({ trackId: "1", explicit: true });
-    await setSong(db, u, null);
-    expect((await getProfile(db, u)).song).toBeNull();
-  });
 });

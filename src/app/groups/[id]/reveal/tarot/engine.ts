@@ -26,6 +26,8 @@ export interface TarotOptions {
   onPhase: (phase: TarotPhase) => void;
   onError: (message: string) => void;
   onAnnounce: (message: string) => void;
+  /** The chosen card starts flipping onto the person (cue for the Reveal sound). */
+  onFlip?: () => void;
 }
 
 export interface TarotHandle {
@@ -560,6 +562,7 @@ export function mountTarot(root: HTMLElement, opts: TarotOptions): TarotHandle {
     haloIn.animate([{ opacity: 0, transform: "scale(.5)" }, { opacity: 1, transform: "scale(1)" }], { duration: 1500 * SPEED, easing: "cubic-bezier(.22,1,.36,1)", fill: "forwards" });
     await to(R, { y: FY, z: 60, rx: 0, ry: 0, rz: 0, s: 1 }, 760, "cubic-bezier(.45,0,.25,1)");
     const base = { ...R.st };
+    opts.onFlip?.();
     const flip = RI.animate(
       [
         { transform: "rotateY(0deg)", easing: "cubic-bezier(.55,0,.25,1)" },

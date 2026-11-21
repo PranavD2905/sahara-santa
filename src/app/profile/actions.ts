@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { getSession } from "@/lib/auth";
-import { lookupSong, searchSongs, type SongResult } from "@/lib/songs";
-import { DomainError, isDomainError } from "@/server/errors";
+import { isDomainError } from "@/server/errors";
 import { pathFromUrl } from "@/server/picture-paths";
 import { deletePicture, readUpload, storePicture } from "@/server/pictures";
 import * as profile from "@/server/profile";
@@ -56,28 +55,3 @@ export async function removePictureAction(): Promise<ActionState> {
   });
 }
 
-export async function searchSongsAction(term: string): Promise<{ results: SongResult[]; error?: string }> {
-  await actor();
-  try {
-    return { results: await searchSongs(term) };
-  } catch {
-    return { results: [], error: "Music search is unavailable right now." };
-  }
-}
-
-/** The track details are re-fetched here, never trusted from the client. */
-export async function chooseSongAction(trackId: string): Promise<ActionState> {
-  const me = await actor();
-  return attempt(async () => {
-    // A lookup failure (network, unknown id) is reported, not thrown.
-    const song = await lookupSong(trackId).catch(() => null);
-    if (!song) throw new DomainError("invalid", "Couldn't find that song. Try another.");
-    await profile.setSong(db, me, song);
-    return "Song saved.";
-  });
-}
-
-export async function clearSongAction(): Promise<ActionState> {
-  const me = await actor();
-  return attempt(() => profile.setSong(db, me, null));
-}

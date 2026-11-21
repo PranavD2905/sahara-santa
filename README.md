@@ -3,7 +3,7 @@
 Secret Santa web app: sign up, join a Group by invite link, and let the Draw assign who gives to whom.
 Scope: `docs/V1-SCOPE.md` · Vocabulary: `GLOSSARY.md` · Decisions: `docs/adr/`.
 
-Stack: Next.js 16 · Neon Postgres + Drizzle · Better Auth (username + password, no email) · Vercel Blob (private) · iTunes previews.
+Stack: Next.js 16 · Neon Postgres + Drizzle · Better Auth (username + password, no email) · Vercel Blob (private).
 
 ## Run locally (no accounts needed)
 
@@ -17,7 +17,7 @@ DATABASE_URL=postgres://postgres@localhost:5433/postgres npm run db:migrate
 npm run dev               # terminal 2
 ```
 
-There is no email: sign up with a username. Without `BLOB_READ_WRITE_TOKEN`, pictures go to `./.data/uploads`.
+There is no email: sign up with a username. Background music: put an mp3 at `public/audio/background.mp3` (sound is on by default; visitors mute it with the top-right button). Without `BLOB_READ_WRITE_TOKEN`, pictures go to `./.data/uploads`.
 
 ## Deploy (Vercel)
 

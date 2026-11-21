@@ -185,12 +185,12 @@ describe("the Draw", () => {
 });
 
 describe("privacy", () => {
-  it("the Organizer's view never contains Assignments or Songs", async () => {
+  it("the Organizer's view never contains Assignments", async () => {
     const g = await drawn(4);
     const view = await getGroupView(db, g.organizer, g.groupId, { now: NOW });
     const json = JSON.stringify(view);
     // Check keys, not values (the Group name itself contains "Santa").
-    expect(json).not.toMatch(/"\w*(receiver|santa|song)\w*":/i);
+    expect(json).not.toMatch(/"\w*(receiver|santa)\w*":/i);
     expect(view.members.every((m) => m.revealed === false)).toBe(true);
   });
 
@@ -202,18 +202,15 @@ describe("privacy", () => {
     expect(view.members.every((m) => m.revealed === undefined)).toBe(true);
   });
 
-  it("Reveal shows the Santa their receiver, with Song, and marks revealed", async () => {
+  it("Reveal shows the Santa their receiver and marks revealed", async () => {
     const g = await drawn(3);
     const santa = g.members[1];
     const rows = await assignmentsOf(g.groupId);
     const receiverId = rows.find((r) => r.santaId === santa)!.receiverId;
-    await db
-      .update((await import("@/db/schema")).user)
-      .set({ songTrackId: "123", songTitle: "Jingle", songArtist: "Band" })
-      .where(eq((await import("@/db/schema")).user.id, receiverId));
 
     const reveal = await revealMyAssignment(db, santa, g.groupId, { now: NOW });
-    expect(reveal?.receiver.song?.title).toBe("Jingle");
+    expect(reveal?.receiver.name).toBe(`User ${receiverId}`);
+    expect(reveal?.receiver).not.toHaveProperty("song");
     const orgView = await getGroupView(db, g.organizer, g.groupId, { now: NOW });
     expect(orgView.members.find((m) => m.userId === santa)?.revealed).toBe(true);
   });

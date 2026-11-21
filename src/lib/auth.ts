@@ -57,11 +57,6 @@ export const auth = betterAuth({
     // Profile fields are written by app server actions, never by sign-up.
     additionalFields: {
       bio: { type: "string", required: false, input: false },
-      songTrackId: { type: "string", required: false, input: false },
-      songTitle: { type: "string", required: false, input: false },
-      songArtist: { type: "string", required: false, input: false },
-      songArtworkUrl: { type: "string", required: false, input: false },
-      songExplicit: { type: "boolean", required: false, input: false },
     },
   },
 

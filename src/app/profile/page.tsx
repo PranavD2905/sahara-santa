@@ -6,7 +6,6 @@ import { BIO_MAX, getProfile, NAME_MAX } from "@/server/profile";
 import { requireUser } from "@/server/session";
 import { removePictureAction, saveProfileAction, uploadPictureAction } from "./actions";
 import { DeleteAccount } from "./delete-account";
-import { SongPicker } from "./song-picker";
 
 export default async function ProfilePage() {
   const me = await requireUser("/profile");
@@ -46,13 +45,6 @@ export default async function ProfilePage() {
         </ActionForm>
       </Card>
 
-      <Card className="space-y-3">
-        <CardTitle>Your song</CardTitle>
-        <p className="text-sm text-muted">
-          Hidden from everyone until the Draw. Then only your Secret Santa gets to hear it.
-        </p>
-        <SongPicker current={p.song} />
-      </Card>
 
       <Card className="space-y-3">
         <CardTitle>Delete account</CardTitle>
