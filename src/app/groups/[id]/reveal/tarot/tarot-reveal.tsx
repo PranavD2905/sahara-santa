@@ -60,6 +60,12 @@ export function TarotReveal({
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    // A fresh engine always starts at the deck. When Next.js brings this page
+    // back from its hidden (Activity) state, React keeps the old state, so
+    // reset it too; replaying still lands on the same person (viewRef).
+    setPhase("ready");
+    setView(null);
+    setError("");
     const handle = mountTarot(root, {
       known: viewRef.current ? toPerson(viewRef.current) : null,
       fetchPerson: async () => {

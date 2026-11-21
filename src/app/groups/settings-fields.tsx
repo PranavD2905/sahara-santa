@@ -12,7 +12,7 @@ export function SettingsFields({ initial }: { initial?: Partial<GroupSettings> }
           <select
             name="currency"
             defaultValue={initial?.currency ?? "INR"}
-            className="w-full rounded-md border border-neutral-300 bg-transparent px-3 py-2 text-base dark:border-neutral-700"
+            className="field-input"
           >
             {CURRENCIES.map((c) => (
               <option key={c}>{c}</option>

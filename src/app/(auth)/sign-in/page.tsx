@@ -10,15 +10,15 @@ export default async function SignInPage({
 }) {
   const next = safeNext((await searchParams).next);
   return (
-    <Page narrow title="Sign in">
+    <Page narrow title="Sign in" subtitle="Welcome back. Your person might be waiting.">
       <SignInForm next={next} />
-      <p className="text-sm">
+      <p className="text-sm text-cream/80">
         New here?{" "}
-        <Link className="underline" href={`/sign-up?next=${encodeURIComponent(next)}`}>
+        <Link className="text-sand-lt underline underline-offset-4 hover:text-cream" href={`/sign-up?next=${encodeURIComponent(next)}`}>
           Create an account
         </Link>
       </p>
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-cream/70">
         Forgot your password? Ask your Group&apos;s Organizer to reset it from Group Settings.
       </p>
     </Page>

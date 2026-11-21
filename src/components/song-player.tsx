@@ -51,24 +51,24 @@ export function SongPlayer({ song }: { song: SongInfo }) {
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-md border border-neutral-300 p-3 text-left dark:border-neutral-700">
+    <div className="flex items-center gap-3 rounded-md border-[1.5px] border-ink/30 bg-paper p-3 text-left text-ink">
       {song.artworkUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- remote artwork thumbnail
-        <img src={song.artworkUrl} alt="" width={56} height={56} className="rounded" />
+        <img src={song.artworkUrl} alt="" width={56} height={56} className="rounded border border-ink/30" />
       )}
       <div className="min-w-0 flex-1">
         <div className="truncate font-medium">
           {song.title}
           {song.explicit && (
-            <span title="Explicit" className="ml-2 rounded bg-neutral-300 px-1 text-xs dark:bg-neutral-700">
+            <span title="Explicit" className="ml-2 rounded bg-ink px-1 text-[10px] text-cream">
               E
             </span>
           )}
         </div>
-        <div className="truncate text-sm text-neutral-500">{song.artist}</div>
+        <div className="truncate text-sm text-muted">{song.artist}</div>
       </div>
       {status === "unavailable" ? (
-        <span className="text-xs text-neutral-500">Preview unavailable</span>
+        <span className="text-xs text-muted">Preview unavailable</span>
       ) : (
         <Button type="button" onClick={toggle} disabled={status === "loading"}>
           {status === "playing" ? "Pause" : "Play"}

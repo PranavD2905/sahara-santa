@@ -7,7 +7,7 @@ import { SettingsFields } from "../settings-fields";
 export default async function NewGroupPage() {
   await requireUser("/groups/new");
   return (
-    <Page narrow title="New Group">
+    <Page narrow title="New Group" subtitle="Give it a name, a budget and a gift day. You can change all of this later in Settings.">
       <Card>
         <ActionForm action={createGroupAction} className="space-y-4">
           <SettingsFields />
