@@ -29,6 +29,11 @@ export const user = pgTable("user", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 
+  // Login handle (Better Auth username plugin), stored lower-cased.
+  // `email` above holds an internal placeholder: accounts have no real email.
+  username: text("username").unique(),
+  displayUsername: text("display_username"),
+
   // Profile fields owned by the app, never set through sign-up.
   bio: varchar("bio", { length: 150 }),
   songTrackId: text("song_track_id"),

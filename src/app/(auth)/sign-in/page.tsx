@@ -17,10 +17,9 @@ export default async function SignInPage({
         <Link className="underline" href={`/sign-up?next=${encodeURIComponent(next)}`}>
           Create an account
         </Link>
-        {" · "}
-        <Link className="underline" href="/forgot-password">
-          Forgot password?
-        </Link>
+      </p>
+      <p className="text-sm text-neutral-500">
+        Forgot your password? Ask your Group&apos;s Organizer to reset it from Group Settings.
       </p>
     </Page>
   );

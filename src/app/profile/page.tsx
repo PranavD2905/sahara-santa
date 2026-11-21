@@ -41,7 +41,7 @@ export default async function ProfilePage() {
             />
             <span className="block text-xs text-neutral-500">Up to {BIO_MAX} characters. Shown to people in your Groups.</span>
           </label>
-          <p className="text-sm text-neutral-500">Email: {p.email}</p>
+          <p className="text-sm text-neutral-500">Username: {p.username ? `@${p.username}` : "—"} (used to sign in)</p>
           <Button type="submit">Save</Button>
         </ActionForm>
       </Card>

@@ -3,10 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { getSession } from "@/lib/auth";
+import { getSession, setPasswordFor } from "@/lib/auth";
 import { isDomainError } from "@/server/errors";
 import * as groups from "@/server/groups";
-import { notifyDeparture, notifyDraw, notifyInvites } from "@/server/notifications";
 import { pathFromUrl } from "@/server/picture-paths";
 import { deletePicture, readUpload, storePicture } from "@/server/pictures";
 
@@ -117,16 +116,22 @@ export async function resetInviteAction(groupId: string): Promise<ActionState> {
   return state;
 }
 
-export async function inviteByEmailAction(
+/** No email recovery (ADR 0004): the Organizer sets a temporary password. */
+export async function resetMemberPasswordAction(
   groupId: string,
+  memberId: string,
   _: ActionState,
   form: FormData,
 ): Promise<ActionState> {
   const me = await actor();
+  const password = String(form.get("password") ?? "");
+  if (password.length < 8 || password.length > 128) {
+    return { error: "The temporary password must be 8–128 characters." };
+  }
   return attempt(async () => {
-    const emails = groups.parseInviteEmails(String(form.get("emails") ?? ""));
-    notifyInvites(await groups.getInviteContext(db, me, groupId), emails);
-    return `Invite sent to ${emails.length} ${emails.length === 1 ? "person" : "people"}.`;
+    await groups.requireCanResetPassword(db, me, groupId, memberId);
+    await setPasswordFor(memberId, password);
+    return "Password reset. Tell them the new password; they're signed out everywhere.";
   });
 }
 
@@ -168,10 +173,9 @@ export async function drawAction(groupId: string): Promise<ActionState> {
   const me = await actor();
   const state = await attempt(async () => {
     const out = await groups.runDraw(db, me, groupId);
-    notifyDraw(groupId, out);
     return out.isRedraw
-      ? "Re-draw done. Everyone has been emailed."
-      : "The Draw is done. Everyone has been emailed.";
+      ? "Re-draw done. Tell everyone to open the Group and reveal their new person."
+      : "The Draw is done. Tell everyone to open the Group and reveal their person.";
   });
   revalidateGroup(groupId);
   return state;
@@ -180,7 +184,7 @@ export async function drawAction(groupId: string): Promise<ActionState> {
 function departureMessage(out: groups.DepartureOutcome): string {
   switch (out.kind) {
     case "patched":
-      return "Removed. One Santa has a new person and has been emailed.";
+      return "Removed. One Santa has a new person; they'll see it next time they open the Group.";
     case "cleared":
       return "Removed. Too few Members remain, so the Draw was cleared.";
     case "needs-redraw":
@@ -193,9 +197,7 @@ function departureMessage(out: groups.DepartureOutcome): string {
 export async function removeMemberAction(groupId: string, memberId: string): Promise<ActionState> {
   const me = await actor();
   const state = await attempt(async () => {
-    const out = await groups.removeMember(db, me, groupId, memberId);
-    notifyDeparture(groupId, out);
-    return departureMessage(out);
+    return departureMessage(await groups.removeMember(db, me, groupId, memberId));
   });
   revalidateGroup(groupId);
   return state;
@@ -204,7 +206,7 @@ export async function removeMemberAction(groupId: string, memberId: string): Pro
 export async function leaveAction(groupId: string): Promise<ActionState> {
   const me = await actor();
   const state = await attempt(async () => {
-    notifyDeparture(groupId, await groups.leaveGroup(db, me, groupId));
+    await groups.leaveGroup(db, me, groupId);
   });
   if (state.error) return state;
   redirect("/");

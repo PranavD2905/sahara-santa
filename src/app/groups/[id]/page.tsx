@@ -73,7 +73,7 @@ export default async function GroupPage({
               ) : g.needsRedraw ? (
                 <Notice>
                   Your person changed and the Organizer needs to run a Re-draw.
-                  You&apos;ll get an email.
+                  Check back here soon.
                 </Notice>
               ) : (
                 <Notice>You&apos;re not part of this Draw.</Notice>

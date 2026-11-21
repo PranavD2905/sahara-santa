@@ -38,15 +38,10 @@ type GroupRow = typeof group.$inferSelect;
 // Guards
 // ---------------------------------------------------------------------------
 
-async function requireVerified(db: AppDb | Tx, userId: string) {
-  const [u] = await db
-    .select({ emailVerified: user.emailVerified })
-    .from(user)
-    .where(eq(user.id, userId));
+/** Accounts are username + password with no verification step (ADR 0004). */
+async function requireAccount(db: AppDb | Tx, userId: string) {
+  const [u] = await db.select({ id: user.id }).from(user).where(eq(user.id, userId));
   if (!u) throw new DomainError("not-found", "Account not found.");
-  if (!u.emailVerified) {
-    throw new DomainError("unverified", "Verify your email first.");
-  }
 }
 
 /** Locks the Group row for the rest of the transaction. */
@@ -125,7 +120,7 @@ export async function createGroup(
 ): Promise<{ id: string; inviteCode: string }> {
   const s = validateSettings(settings);
   return db.transaction(async (tx) => {
-    await requireVerified(tx, actorId);
+    await requireAccount(tx, actorId);
     const [{ n }] = await tx
       .select({ n: count() })
       .from(group)
@@ -149,7 +144,7 @@ export async function joinByCode(
 ): Promise<{ groupId: string; alreadyMember: boolean }> {
   const now = opts.now ?? new Date();
   return db.transaction(async (tx) => {
-    await requireVerified(tx, actorId);
+    await requireAccount(tx, actorId);
     const [found] = await tx
       .select({ id: group.id })
       .from(group)
@@ -321,9 +316,8 @@ async function loadExclusions(db: AppDb | Tx, groupId: string): Promise<Exclusio
 
 export interface DrawOutcome {
   isRedraw: boolean;
-  /** Everyone to email "Draw done" / "Re-draw". */
-  notify: { userId: string; name: string; email: string }[];
-  groupName: string;
+  /** How many people were placed in the loop. */
+  participants: number;
 }
 
 export function describeDrawError(e: DrawError): string {
@@ -365,9 +359,8 @@ export async function runDraw(
     }
 
     const participants = await tx
-      .select({ userId: user.id, name: user.name, email: user.email })
+      .select({ userId: groupMember.userId })
       .from(groupMember)
-      .innerJoin(user, eq(user.id, groupMember.userId))
       .where(and(eq(groupMember.groupId, groupId), eq(groupMember.participates, true)));
 
     const result = draw(
@@ -390,7 +383,7 @@ export async function runDraw(
       .set({ status: "drawn", drawnAt: now, needsRedraw: false, updatedAt: now })
       .where(eq(group.id, groupId));
 
-    return { isRedraw, notify: participants, groupName: g.name };
+    return { isRedraw, participants: participants.length };
   });
 }
 
@@ -402,9 +395,8 @@ export type DepartureOutcome =
   | { kind: "left" }
   | {
       kind: "patched";
-      /** The Santa whose receiver changed: email them. */
-      changedSanta: { userId: string; name: string; email: string };
-      groupName: string;
+      /** The Santa whose receiver changed; they see "Reveal my person" again. */
+      changedSantaId: string;
     }
   | { kind: "cleared" }
   | { kind: "needs-redraw" };
@@ -443,11 +435,7 @@ async function depart(tx: Tx, g: GroupRow, leaverId: string): Promise<DepartureO
           .where(
             and(eq(groupMember.groupId, g.id), eq(groupMember.userId, link.santaId)),
           );
-        const [s] = await tx
-          .select({ userId: user.id, name: user.name, email: user.email })
-          .from(user)
-          .where(eq(user.id, link.santaId));
-        outcome = { kind: "patched", changedSanta: s, groupName: g.name };
+        outcome = { kind: "patched", changedSantaId: link.santaId };
         break;
       }
       case "cleared":
@@ -843,52 +831,26 @@ export async function myRevealState(
   return { hasAssignment: Boolean(mine), revealed: Boolean(me?.revealedAt) };
 }
 
-export const MAX_INVITES_PER_SEND = 20;
-
 /**
- * Validates a pasted list of addresses for Invite by email: splits on
- * commas, semicolons and whitespace, lower-cases, de-duplicates.
+ * Permission check for an Organizer resetting a Member's password (there is
+ * no email recovery, ADR 0004). Only Members of the Organizer's own Group,
+ * and never themselves (they use their own account settings).
  */
-export function parseInviteEmails(raw: string): string[] {
-  const emails = [
-    ...new Set(
-      raw
-        .split(/[\s,;]+/)
-        .map((e) => e.trim().toLowerCase())
-        .filter(Boolean),
-    ),
-  ];
-  if (emails.length === 0) throw new DomainError("invalid", "Enter at least one email address.");
-  if (emails.length > MAX_INVITES_PER_SEND) {
-    throw new DomainError("invalid", `Send at most ${MAX_INVITES_PER_SEND} invites at a time.`);
-  }
-  const bad = emails.filter((e) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || e.length > 254);
-  if (bad.length > 0) {
-    throw new DomainError("invalid", `Not a valid email: ${bad.slice(0, 3).join(", ")}`);
-  }
-  return emails;
-}
-
-/**
- * What the Organizer needs to email invites. Only while joining is open,
- * since a closed Group's link wouldn't work.
- */
-export async function getInviteContext(
+export async function requireCanResetPassword(
   db: AppDb,
   actorId: string,
   groupId: string,
-  opts: Options = {},
-): Promise<{ groupName: string; inviteCode: string; organizerName: string }> {
-  const now = opts.now ?? new Date();
+  memberId: string,
+): Promise<void> {
   const [g] = await db.select().from(group).where(eq(group.id, groupId));
   if (!g) throw new DomainError("not-found", "Group not found.");
   requireOrganizer(g, actorId);
-  requireNotArchived(g, now);
-  if (g.status !== "open") {
-    throw new DomainError("conflict", "Reopen joining before sending invites.");
+  if (memberId === actorId) {
+    throw new DomainError("invalid", "You can't reset your own password here.");
   }
-  const [o] = await db.select({ name: user.name }).from(user).where(eq(user.id, actorId));
-  return { groupName: g.name, inviteCode: g.inviteCode, organizerName: o?.name ?? "Your Organizer" };
+  if (!(await isMember(db, groupId, memberId))) {
+    throw new DomainError("not-found", "That person isn't in this Group.");
+  }
 }
 
 /** What an invite link shows before joining. Requires the code itself. */

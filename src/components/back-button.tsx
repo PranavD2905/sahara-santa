@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 /**
  * Goes to the previous screen. When there's nothing to go back to in this
- * app (a link opened from an email, a new tab), goes to `fallback` instead.
+ * app (a shared link, a new tab), goes to `fallback` instead.
  */
 export function BackButton({ fallback = "/" }: { fallback?: string }) {
   const router = useRouter();

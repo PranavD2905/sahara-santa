@@ -8,7 +8,7 @@ export const NAME_MAX = 60;
 
 export interface ProfileView {
   name: string;
-  email: string;
+  username: string | null;
   image: string | null;
   bio: string | null;
   song: {
@@ -25,7 +25,7 @@ export async function getProfile(db: AppDb, userId: string): Promise<ProfileView
   if (!u) throw new DomainError("not-found", "Account not found.");
   return {
     name: u.name,
-    email: u.email,
+    username: u.displayUsername ?? u.username,
     image: u.image,
     bio: u.bio,
     song: u.songTrackId

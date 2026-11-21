@@ -7,16 +7,15 @@ Answers you did not change during the design interview were taken as accepted.
 
 - Next.js on Vercel (GitHub → Vercel previews, `main` is production)
 - Neon Postgres via the Vercel Marketplace
-- Better Auth: email + password with email verification and password reset; rate-limited login and reset
-- Resend for email (test sender in development; a verified custom domain before real users)
+- Better Auth: **username + password**, no email at all (ADR 0004); rate-limited sign-in and sign-up
 - Vercel Blob for Profile Pictures (direct client upload)
 - iTunes Search API for Songs (see ADR 0003)
 - Responsive web, laptop-first, then mobile. **Functional-first, basic UI.** Polish (the warm desert theme) comes after the functionality works.
 
 ## Accounts and Profile
 
-- A verified email is required to create or join a Group and to upload a Profile Picture.
-- Display name is required.
+- Sign up with a display name, a username (3–30 letters, numbers, dots or underscores; case-insensitive) and a password (8+ characters). No email, no verification.
+- Forgotten password: the Group's Organizer sets a temporary password for that Member in Group Settings (signs them out everywhere).
 - Profile Picture is optional (initials by default). Instagram-style crop with pan and zoom, stored as a 512×512 WebP, shown as a circle. JPG, PNG or WebP up to 5 MB. EXIF is stripped, and the old file is deleted on replace or account deletion.
 - Bio is up to 150 characters of plain text.
 - Song is optional and global to the Profile. It is hidden from everyone until the Draw, then only the Santa hears it, and the owner sees their own. Tap to play a 30-second preview, no autoplay, with an "E" badge for explicit tracks.
@@ -27,7 +26,7 @@ Answers you did not change during the design interview were taken as accepted.
 - One Organizer per Group, who participates by default (opt-out possible). Ownership can be transferred.
 - The Organizer must transfer ownership or delete the Group before leaving or deleting their account. Deleting a Group needs a typed-name confirmation.
 - Limits: 3–50 Members per Group (3 minimum to Draw), 10 Groups created per user, unlimited Groups joined.
-- Join via Invite Link or short code. Joining requires sign-in and a verified email. The Organizer can reset the link and remove Members.
+- Join via Invite Link or short code. Joining requires signing in. The Organizer can reset the link and remove Members.
 - Budget: one min–max range per Group in INR, USD, EUR or GBP (default INR), not enforced.
 - Exchange Date is optional until the Draw, required before it, and editable after.
 - Lifecycle: Open → Joining Closed (manual, Organizer's choice) → Drawn → Archived (read-only 30 days after the Exchange Date, deleted after 1 year).
@@ -49,7 +48,7 @@ Answers you did not change during the design interview were taken as accepted.
 
 ## Email
 
-Only four kinds, besides verification and password reset: **Draw done**, **Re-draw**, **your receiver changed** (sent only to the affected Santa after a Patch), and **Invite by email** (the Organizer sends the join link and code to up to 20 addresses at a time, only while joining is open). Nothing else is emailed. Date or Budget changes get an in-app notice only.
+None (ADR 0004). Invites are shared as a link or code (e.g. on WhatsApp). Draw, Re-draw and "your person changed" show in the app as "Reveal my person". The Organizer tells the Group when the Draw is done.
 
 ## Privacy and data
 
@@ -67,6 +66,5 @@ Wishlists, anonymous chat, reminders, member-joined emails, report buttons, auto
 
 ## Before launch
 
-- Buy and verify a sending domain in Resend.
 - Re-check the iTunes preview terms.
 - Write the FAQ, including the privacy statement.
