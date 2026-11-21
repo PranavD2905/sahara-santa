@@ -181,7 +181,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
               </CardTitle>
               <ActionForm
                 action={leaveAction.bind(null, id)}
-                confirm={`Leave ${g.name}?${g.status === "drawn" ? " Your Santa will be given a new person." : ""}`}
+                confirm={{ title: `Leave ${g.name}?`, body: g.status === "drawn" ? "Your Santa will be given a new person, and you won't be gifting anyone here." : "You can rejoin with the invite link while joining is open.", confirmLabel: "Leave Group", tone: "danger" }}
               >
                 <Button type="submit" variant="secondary">
                   Leave Group

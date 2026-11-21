@@ -157,6 +157,11 @@ body {
 }
 .parchment :focus-visible { outline-color: var(--ink); }
 
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
 @keyframes twinkle {
   0%, 100% { transform: scale(0.8); opacity: 0.6; }
   50% { transform: scale(1.15); opacity: 1; }
@@ -164,5 +169,6 @@ body {
 .sparkle-twinkle { animation: twinkle 2.8s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sparkle-twinkle { animation: none; }
+  .sparkle-twinkle,
+  dialog[open] { animation: none !important; }
 }

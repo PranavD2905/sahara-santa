@@ -719,6 +719,24 @@ export function mountTarot(root: HTMLElement, opts: TarotOptions): TarotHandle {
     }, 160);
   }
 
+  /**
+   * Put the revealed card back to its hidden starting state. Next.js keeps a
+   * left page alive but hidden (React Activity) and re-runs effects when it
+   * comes back, so the DOM can still hold a previous Reveal's inline styles;
+   * without this, the old card stays on screen above a fresh deck.
+   */
+  function resetRevealDom() {
+    R.el.classList.remove("is-done", "is-grabbing");
+    R.el.style.visibility = "hidden";
+    R.el.style.transform = "";
+    R.el.style.opacity = "";
+    RI.style.transform = "rotateY(0deg)";
+    RD.style.transform = "";
+    haloIn.style.opacity = "";
+    spot.style.opacity = "";
+  }
+
+  resetRevealDom();
   measure();
   void rest(false);
   apply(halo, { x: 0, y: FY, z: -60 });
@@ -755,6 +773,7 @@ export function mountTarot(root: HTMLElement, opts: TarotOptions): TarotHandle {
       window.removeEventListener("resize", onResize);
       for (const el of root.querySelectorAll("*")) el.getAnimations().forEach((a) => a.cancel());
       cards.forEach((c) => c.el.remove());
+      resetRevealDom();
     },
   };
 }

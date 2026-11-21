@@ -92,7 +92,7 @@ export function InviteCard({ group: g, inviteUrl }: { group: GroupView; inviteUr
           </div>
           <div className="flex flex-wrap gap-2">
             <CopyButton text={inviteUrl} />
-            <ActionForm action={resetInviteAction.bind(null, id)} confirm="Make a new link? The current one will stop working.">
+            <ActionForm action={resetInviteAction.bind(null, id)} confirm={{ title: "Make a new invite link?", body: "The current link and code will stop working. Anyone who hasn't joined yet will need the new one.", confirmLabel: "Make new link" }}>
               <Button type="submit" variant="ghost" size="sm">Reset link</Button>
             </ActionForm>
           </div>
@@ -144,7 +144,7 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
             </Check>
             <Check ok={hasDate}>{hasDate ? "Gift day is set" : "Set a gift day in Settings"}</Check>
           </ul>
-          <ActionForm action={setJoiningAction.bind(null, id, false)} confirm="Close joining? New people won't be able to join.">
+          <ActionForm action={setJoiningAction.bind(null, id, false)} confirm={{ title: "Close joining?", body: "Nobody new can join after this. You can still reopen joining from Settings until you run the Draw.", confirmLabel: "Close joining" }}>
             <Button type="submit">Close joining</Button>
           </ActionForm>
         </>
@@ -157,7 +157,7 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
             </Check>
             <Check ok={hasDate}>{hasDate ? "Gift day is set" : "Set a gift day in Settings"}</Check>
           </ul>
-          <ActionForm action={drawAction.bind(null, id)} confirm="Run the Draw now? Everyone can then reveal their person.">
+          <ActionForm action={drawAction.bind(null, id)} confirm={{ title: "Run the Draw?", body: "Everyone in the Draw gets one person to gift. They can reveal them straight away, so let the Group know!", confirmLabel: "Run the Draw" }}>
             <Button type="submit" size="lg" disabled={!enoughPeople || !hasDate}>
               <Sparkle /> Run the Draw <Sparkle />
             </Button>
@@ -175,7 +175,7 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
           </p>
           <ActionForm
             action={drawAction.bind(null, id)}
-            confirm="Re-draw? Everyone gets a new person. This replaces the current Draw."
+            confirm={{ title: "Re-draw for everyone?", body: "Everyone gets a new person and has to reveal again. The current Draw is replaced and can't be restored.", confirmLabel: "Re-draw", tone: "danger" }}
           >
             <Button type="submit" variant={g.needsRedraw ? "primary" : "ghost"} size="sm">
               Re-draw
@@ -298,7 +298,7 @@ export function SettingsSections({ group: g, meId }: { group: GroupView; meId: s
                       )}
                       <ActionForm
                         action={removeMemberAction.bind(null, id, m.userId)}
-                        confirm={`Remove ${m.name} from ${g.name}?`}
+                        confirm={{ title: `Remove ${m.name}?`, body: g.status === "drawn" ? `${m.name} leaves ${g.name}. Their Santa is given a new person automatically.` : `${m.name} leaves ${g.name}. They can rejoin with the invite link while joining is open.`, confirmLabel: "Remove", tone: "danger" }}
                         className=""
                       >
                         <Button type="submit" variant="secondary">Remove</Button>
@@ -308,7 +308,7 @@ export function SettingsSections({ group: g, meId }: { group: GroupView; meId: s
                   <PictureUpload upload={uploadOverridePictureAction.bind(null, id, m.userId)} label="Replace picture in this Group" />
                   <ActionForm
                     action={resetMemberPasswordAction.bind(null, id, m.userId)}
-                    confirm={`Set a new password for ${m.name}? They'll be signed out everywhere.`}
+                    confirm={{ title: `Reset ${m.name}'s password?`, body: "They'll be signed out everywhere and need the new password to sign in. Tell it to them directly.", confirmLabel: "Set password" }}
                     className="flex flex-wrap items-end gap-2"
                   >
                     <div className="min-w-48 flex-1">
@@ -333,7 +333,7 @@ export function SettingsSections({ group: g, meId }: { group: GroupView; meId: s
         {others.length > 0 && (
           <Card className="space-y-3">
             <h3 className="font-title text-sm font-medium tracking-[0.24em] text-ink-soft uppercase">Transfer ownership</h3>
-            <ActionForm action={transferAction.bind(null, id)} confirm="Make this person the Organizer? You'll lose Organizer controls.">
+            <ActionForm action={transferAction.bind(null, id)} confirm={{ title: "Transfer ownership?", body: "They become the Organizer and you lose the Organizer controls. You stay in the Group as a Member.", confirmLabel: "Transfer", tone: "danger" }}>
               <select name="to" required className="field-input" defaultValue="">
                 <option value="" disabled>Choose…</option>
                 {others.map((m) => (
@@ -355,7 +355,7 @@ function DeleteCard({ g }: { g: GroupView }) {
   return (
     <Card className="space-y-3">
       <h3 className="font-title text-sm font-medium tracking-[0.24em] text-ink-soft uppercase">Delete Group</h3>
-      <ActionForm action={deleteGroupAction.bind(null, g.id)} confirm="Delete this Group for everyone? This can't be undone.">
+      <ActionForm action={deleteGroupAction.bind(null, g.id)} confirm={{ title: `Delete ${g.name}?`, body: "The Group, its members list and the Draw are deleted for everyone. This can't be undone.", confirmLabel: "Delete Group", tone: "danger" }}>
         <Field label={`Type "${g.name}" to confirm`} name="confirmName" required autoComplete="off" />
         <Button type="submit" variant="danger">Delete Group</Button>
       </ActionForm>
