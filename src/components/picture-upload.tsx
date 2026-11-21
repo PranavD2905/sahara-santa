@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type PointerEvent } from "react";
 import type { ActionState } from "@/app/groups/actions";
-import { Button, Notice } from "./ui";
+import { Button, Notice, buttonClass } from "./ui";
 
 const VIEW = 280; // on-screen crop square, px
 const OUT = 512; // uploaded square, px
@@ -133,7 +133,7 @@ export function PictureUpload({ upload, label = "Choose picture" }: { upload: Up
       {img ? (
         <>
           <div
-            className="relative mx-auto touch-none select-none overflow-hidden rounded-md bg-neutral-900"
+            className="relative mx-auto touch-none select-none overflow-hidden rounded-md border-2 border-ink bg-night"
             style={{ width: VIEW, height: VIEW, cursor: "grab" }}
             onPointerDown={onDown}
             onPointerMove={onMove}
@@ -177,7 +177,7 @@ export function PictureUpload({ upload, label = "Choose picture" }: { upload: Up
           </div>
         </>
       ) : (
-        <label className="inline-block cursor-pointer rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium dark:border-neutral-700">
+        <label className={`cursor-pointer ${buttonClass("secondary")}`}>
           {label}
           <input
             type="file"

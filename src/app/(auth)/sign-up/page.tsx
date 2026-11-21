@@ -10,11 +10,11 @@ export default async function SignUpPage({
 }) {
   const next = safeNext((await searchParams).next);
   return (
-    <Page narrow title="Create your account">
+    <Page narrow title="Create your account" subtitle="Just a username and password. No email needed.">
       <SignUpForm next={next} />
-      <p className="text-sm">
+      <p className="text-sm text-cream/80">
         Already have an account?{" "}
-        <Link className="underline" href={`/sign-in?next=${encodeURIComponent(next)}`}>
+        <Link className="text-sand-lt underline underline-offset-4 hover:text-cream" href={`/sign-in?next=${encodeURIComponent(next)}`}>
           Sign in
         </Link>
       </p>

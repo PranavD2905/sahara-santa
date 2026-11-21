@@ -1,6 +1,6 @@
 import { ActionForm } from "@/components/action-form";
 import { PictureUpload } from "@/components/picture-upload";
-import { Avatar, Button, Card, Field, Page } from "@/components/ui";
+import { Avatar, Button, Card, CardTitle, Field, Page } from "@/components/ui";
 import { db } from "@/db";
 import { BIO_MAX, getProfile, NAME_MAX } from "@/server/profile";
 import { requireUser } from "@/server/session";
@@ -13,9 +13,9 @@ export default async function ProfilePage() {
   const p = await getProfile(db, me.id);
 
   return (
-    <Page narrow title="Your profile">
+    <Page narrow title="Your profile" subtitle="This is what your friends see in your Groups, and what your Secret Santa sees on your card.">
       <Card className="space-y-4">
-        <h2 className="font-medium">Picture</h2>
+        <CardTitle>Picture</CardTitle>
         <div className="flex items-center gap-4">
           <Avatar name={p.name} image={p.image} size={96} />
           {p.image && (
@@ -37,25 +37,25 @@ export default async function ProfilePage() {
               maxLength={BIO_MAX}
               rows={3}
               defaultValue={p.bio ?? ""}
-              className="w-full rounded-md border border-neutral-300 bg-transparent px-3 py-2 text-base dark:border-neutral-700"
+              className="field-input"
             />
-            <span className="block text-xs text-neutral-500">Up to {BIO_MAX} characters. Shown to people in your Groups.</span>
+            <span className="block text-xs text-muted">Up to {BIO_MAX} characters. Shown to people in your Groups.</span>
           </label>
-          <p className="text-sm text-neutral-500">Username: {p.username ? `@${p.username}` : "—"} (used to sign in)</p>
+          <p className="text-sm text-muted">Username: {p.username ? `@${p.username}` : "—"} (used to sign in)</p>
           <Button type="submit">Save</Button>
         </ActionForm>
       </Card>
 
       <Card className="space-y-3">
-        <h2 className="font-medium">Your song</h2>
-        <p className="text-sm text-neutral-500">
+        <CardTitle>Your song</CardTitle>
+        <p className="text-sm text-muted">
           Hidden from everyone until the Draw. Then only your Secret Santa gets to hear it.
         </p>
         <SongPicker current={p.song} />
       </Card>
 
       <Card className="space-y-3">
-        <h2 className="font-medium">Delete account</h2>
+        <CardTitle>Delete account</CardTitle>
         <DeleteAccount />
       </Card>
     </Page>

@@ -25,7 +25,7 @@ export function DeleteAccount() {
 
   return (
     <form action={onSubmit} className="space-y-3">
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-muted">
         You&apos;ll leave every Group. If a Draw has happened, your Santa gets your person instead.
         Groups you organise must be transferred or deleted first.
       </p>

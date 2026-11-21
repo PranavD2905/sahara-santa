@@ -10,7 +10,7 @@ export default async function GroupSettingsPage({ params }: { params: Promise<{ 
   const { g, meId } = loaded;
 
   return (
-    <Page backHref={`/groups/${id}`} title={`${g.name} · Settings`}>
+    <Page backHref={`/groups/${id}`} title={`${g.name} · Settings`} subtitle="Everything about this Group, in one place.">
       <SettingsSections group={g} meId={meId} />
     </Page>
   );

@@ -52,7 +52,7 @@ export function SongPicker({ current }: { current: SongInfo | null }) {
           </Button>
         </>
       ) : (
-        <p className="text-sm text-neutral-500">No song picked yet.</p>
+        <p className="text-sm text-muted">No song picked yet.</p>
       )}
 
       <Field
@@ -70,7 +70,7 @@ export function SongPicker({ current }: { current: SongInfo | null }) {
       />
       <Notice>{error}</Notice>
       {results.length > 0 && (
-        <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-300 dark:divide-neutral-800 dark:border-neutral-700">
+        <ul className="divide-y divide-ink/10 rounded-md border-[1.5px] border-ink/30 bg-paper">
           {results.map((s) => (
             <li key={s.trackId} className="flex items-center gap-3 p-2">
               {s.artworkUrl && (
@@ -80,9 +80,9 @@ export function SongPicker({ current }: { current: SongInfo | null }) {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">
                   {s.title}
-                  {s.explicit && <span className="ml-1 rounded bg-neutral-300 px-1 text-xs dark:bg-neutral-700">E</span>}
+                  {s.explicit && <span className="ml-1 rounded bg-ink px-1 text-[10px] text-cream">E</span>}
                 </div>
-                <div className="truncate text-xs text-neutral-500">{s.artist}</div>
+                <div className="truncate text-xs text-muted">{s.artist}</div>
               </div>
               <Button type="button" variant="secondary" disabled={pending} onClick={() => choose(s.trackId)}>
                 Choose

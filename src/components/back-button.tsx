@@ -11,7 +11,7 @@ export function BackButton({ fallback = "/" }: { fallback?: string }) {
   return (
     <button
       type="button"
-      className="mb-4 inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+      className="mb-5 -ml-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-title text-xs tracking-[0.18em] text-cream/75 uppercase transition hover:bg-cream/10 hover:text-cream"
       onClick={() => {
         const cameFromApp =
           window.history.length > 1 &&
