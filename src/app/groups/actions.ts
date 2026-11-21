@@ -7,6 +7,8 @@ import { getSession } from "@/lib/auth";
 import { isDomainError } from "@/server/errors";
 import * as groups from "@/server/groups";
 import { notifyDeparture, notifyDraw } from "@/server/notifications";
+import { pathFromUrl } from "@/server/picture-paths";
+import { deletePicture, readUpload, storePicture } from "@/server/pictures";
 
 export interface ActionState {
   error?: string;
@@ -224,6 +226,45 @@ export async function setBioHiddenAction(
   const me = await actor();
   const state = await attempt(async () => {
     await groups.setOverride(db, me, groupId, memberId, { bioHidden: hidden });
+  });
+  revalidatePath(groupPath(groupId));
+  return state;
+}
+
+export async function uploadOverridePictureAction(
+  groupId: string,
+  memberId: string,
+  _: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const me = await actor();
+  const state = await attempt(async () => {
+    // Check permission before storing anything.
+    await groups.setOverride(db, me, groupId, memberId, {});
+    const url = await storePicture(
+      { userId: memberId, groupId },
+      await readUpload(form.get("picture")),
+    );
+    const { previousPictureOverrideUrl } = await groups.setOverride(db, me, groupId, memberId, {
+      pictureOverrideUrl: url,
+    });
+    await deletePicture(pathFromUrl(previousPictureOverrideUrl));
+    return "Picture replaced in this Group.";
+  });
+  revalidatePath(groupPath(groupId));
+  return state;
+}
+
+export async function clearOverridePictureAction(
+  groupId: string,
+  memberId: string,
+): Promise<ActionState> {
+  const me = await actor();
+  const state = await attempt(async () => {
+    const { previousPictureOverrideUrl } = await groups.setOverride(db, me, groupId, memberId, {
+      pictureOverrideUrl: null,
+    });
+    await deletePicture(pathFromUrl(previousPictureOverrideUrl));
   });
   revalidatePath(groupPath(groupId));
   return state;

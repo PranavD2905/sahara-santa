@@ -25,3 +25,6 @@ export default async function SignInPage({
     </Page>
   );
 }
+
+// Per-user page: blocks on the session/URL by design (see Next "instant navigation").
+export const instant = false;

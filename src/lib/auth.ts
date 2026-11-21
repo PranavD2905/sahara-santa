@@ -1,10 +1,16 @@
 import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
 import { db, schema } from "@/db";
 import { sendEmail } from "@/lib/email";
+import { isDomainError } from "@/server/errors";
+import { departAllGroups } from "@/server/groups";
+import { notifyDeparture } from "@/server/notifications";
+import { pathFromUrl } from "@/server/picture-paths";
+import { deletePicture } from "@/server/pictures";
 
 // BETTER_AUTH_SECRET and BETTER_AUTH_URL are read from the environment by
 // Better Auth itself, so importing this module never needs secrets at build.
@@ -47,6 +53,23 @@ export const auth = betterAuth({
   },
 
   user: {
+    deleteUser: {
+      enabled: true,
+      // Leave every Group first so each Draw loop is Patched (ADR 0001).
+      beforeDelete: async (u) => {
+        try {
+          for (const { groupId, outcome } of await departAllGroups(db, u.id)) {
+            notifyDeparture(groupId, outcome);
+          }
+        } catch (e) {
+          if (isDomainError(e)) throw new APIError("BAD_REQUEST", { message: e.message });
+          throw e;
+        }
+      },
+      afterDelete: async (u) => {
+        await deletePicture(pathFromUrl(u.image));
+      },
+    },
     // Profile fields are written by app server actions, never by sign-up.
     additionalFields: {
       bio: { type: "string", required: false, input: false },

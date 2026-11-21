@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // sharp ships a native binary, so it must not be bundled.
+  serverExternalPackages: ["sharp"],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

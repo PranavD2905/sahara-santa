@@ -45,3 +45,6 @@ export default async function RevealPage({ params }: { params: Promise<{ id: str
     </Page>
   );
 }
+
+// Per-user page: blocks on the session/URL by design (see Next "instant navigation").
+export const instant = false;

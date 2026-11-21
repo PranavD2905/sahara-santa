@@ -11,7 +11,7 @@ Answers you did not change during the design interview were taken as accepted.
 - Resend for email (test sender in development; a verified custom domain before real users)
 - Vercel Blob for Profile Pictures (direct client upload)
 - iTunes Search API for Songs (see ADR 0003)
-- Responsive web, mobile-first, laptop too. **Functional-first, basic UI.** Polish (the warm desert theme) comes after the functionality works.
+- Responsive web, laptop-first, then mobile. **Functional-first, basic UI.** Polish (the warm desert theme) comes after the functionality works.
 
 ## Accounts and Profile
 

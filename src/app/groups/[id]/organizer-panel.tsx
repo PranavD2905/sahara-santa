@@ -1,8 +1,11 @@
 import { ActionForm } from "@/components/action-form";
+import { PictureUpload } from "@/components/picture-upload";
 import { Button, Card, Field, Notice } from "@/components/ui";
 import type { GroupView } from "@/server/groups";
 import {
   addExclusionAction,
+  clearOverridePictureAction,
+  uploadOverridePictureAction,
   deleteGroupAction,
   drawAction,
   removeExclusionAction,
@@ -164,6 +167,11 @@ export function OrganizerPanel({
                   <ActionForm action={setBioHiddenAction.bind(null, id, m.userId, !m.bioHidden)} className="">
                     <Button type="submit" variant="secondary">{m.bioHidden ? "Show bio" : "Hide bio"}</Button>
                   </ActionForm>
+                  {m.hasPictureOverride && (
+                    <ActionForm action={clearOverridePictureAction.bind(null, id, m.userId)} className="">
+                      <Button type="submit" variant="secondary">Restore picture</Button>
+                    </ActionForm>
+                  )}
                   <ActionForm
                     action={removeMemberAction.bind(null, id, m.userId)}
                     confirm={`Remove ${m.name} from ${g.name}?`}
@@ -171,6 +179,12 @@ export function OrganizerPanel({
                   >
                     <Button type="submit" variant="secondary">Remove</Button>
                   </ActionForm>
+                </div>
+                <div className="w-full">
+                  <PictureUpload
+                    upload={uploadOverridePictureAction.bind(null, id, m.userId)}
+                    label="Replace picture in this Group"
+                  />
                 </div>
               </li>
             ))}

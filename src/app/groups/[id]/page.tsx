@@ -111,3 +111,6 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     </Page>
   );
 }
+
+// Per-user page: blocks on the session/URL by design (see Next "instant navigation").
+export const instant = false;

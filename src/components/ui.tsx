@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 
 export function Page({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <main className="mx-auto w-full max-w-xl px-4 py-8">
+    <main className="mx-auto w-full max-w-4xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-semibold">{title}</h1>
       <div className="space-y-6">{children}</div>
     </main>

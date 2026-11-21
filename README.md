@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sahara Santa
 
-## Getting Started
+Secret Santa web app: sign up, join a Group by invite link, and let the Draw assign who gives to whom.
+Scope: `docs/V1-SCOPE.md` · Vocabulary: `GLOSSARY.md` · Decisions: `docs/adr/`.
 
-First, run the development server:
+Stack: Next.js 16 · Neon Postgres + Drizzle · Better Auth (email + password, verified) · Resend · Vercel Blob (private) · iTunes previews.
+
+## Run locally (no accounts needed)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run db:local          # terminal 1: PGlite as a Postgres server on :5433
+cp .env.example .env.local
+# .env.local: DATABASE_URL=postgres://postgres@localhost:5433/postgres
+#             BETTER_AUTH_SECRET=$(openssl rand -base64 32)
+DATABASE_URL=postgres://postgres@localhost:5433/postgres npm run db:migrate
+npm run dev               # terminal 2
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Without `RESEND_API_KEY`, emails (verification, Draw) print in the dev server console. Without `BLOB_READ_WRITE_TOKEN`, pictures go to `./.data/uploads`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy (Vercel)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Import the repo in Vercel; add Neon from the Marketplace (sets `DATABASE_URL`).
+2. Set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (production URL), `RESEND_API_KEY`, `EMAIL_FROM` (verified domain); add a private Blob store (sets `BLOB_READ_WRITE_TOKEN`).
+3. Run `npm run db:migrate` against the Neon URL once.
 
-## Learn More
+## Checks
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`npm test` (Draw logic + DB integration on PGlite) · `npm run typecheck` · `npm run lint` · `npm run build`
