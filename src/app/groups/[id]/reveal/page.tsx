@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Notice, Page } from "@/components/ui";
 import { db } from "@/db";
@@ -11,26 +10,20 @@ export default async function RevealPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const me = await requireUser(`/groups/${id}/reveal`);
 
-  let groupName: string;
   try {
-    groupName = (await getGroupView(db, me.id, id)).name;
+    // Membership check: non-members get a 404.
+    await getGroupView(db, me.id, id);
   } catch (e) {
     if (isDomainError(e) && e.code === "not-found") notFound();
     throw e;
   }
 
   const state = await myRevealState(db, me.id, id);
-  const back = (
-    <Link href={`/groups/${id}`} className="text-sm underline">
-      Back to {groupName}
-    </Link>
-  );
 
   if (!state.hasAssignment) {
     return (
-      <Page narrow title="No person yet">
+      <Page narrow backHref={`/groups/${id}`} title="No person yet">
         <Notice>There&apos;s no Assignment for you in this Group right now.</Notice>
-        {back}
       </Page>
     );
   }
@@ -39,9 +32,8 @@ export default async function RevealPage({ params }: { params: Promise<{ id: str
   const view = state.revealed ? await revealMyAssignment(db, me.id, id) : null;
 
   return (
-    <Page narrow title="Your person">
+    <Page narrow backHref={`/groups/${id}`} title="Your person">
       {view ? <ReceiverCard view={view} /> : <RevealButton groupId={id} />}
-      {back}
     </Page>
   );
 }

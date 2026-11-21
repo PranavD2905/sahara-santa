@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Page narrow title="Reset your password">
+    <Page narrow backHref="/sign-in" title="Reset your password">
       <Card>
         {done ? (
           // Same message whether or not the account exists.

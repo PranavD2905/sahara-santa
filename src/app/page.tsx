@@ -15,7 +15,7 @@ export default async function Home() {
 
   if (!session) {
     return (
-      <Page title="Secret Santa, sorted.">
+      <Page back={false} title="Secret Santa, sorted.">
         <p>
           Create a Group, share the invite link, and let the Draw pick who gives to whom.
           Nobody, not even the Organizer, sees the full list.
@@ -35,7 +35,7 @@ export default async function Home() {
   const groups = await listMyGroups(db, session.user.id);
 
   return (
-    <Page title="Your Groups">
+    <Page back={false} title="Your Groups">
       <div className="flex gap-3">
         <Link className="rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white" href="/groups/new">
           New Group

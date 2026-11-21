@@ -8,7 +8,7 @@ export default async function ResetPasswordPage({
 }) {
   const { token, error } = await searchParams;
   return (
-    <Page narrow title="Choose a new password">
+    <Page narrow backHref="/sign-in" title="Choose a new password">
       {token && !error ? (
         <ResetPasswordForm token={token} />
       ) : (

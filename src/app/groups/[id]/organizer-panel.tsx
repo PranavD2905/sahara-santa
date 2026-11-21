@@ -107,6 +107,7 @@ export function InviteCard({ group: g, inviteUrl }: { group: GroupView; inviteUr
   );
 }
 
+/** Shown on both the Group page and Settings. */
 function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
   const id = g.id;
   const participants = g.members.filter((m) => m.participates).length;
@@ -116,7 +117,7 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
       <h3 className="font-medium">Draw</h3>
       {g.status === "open" && (
         <>
-          <p className="text-sm">Close joining when everyone is in. You can add Exclusions in Settings, then run the Draw.</p>
+          <p className="text-sm">Close joining when everyone is in, add any Exclusions, then run the Draw.</p>
           <ActionForm action={setJoiningAction.bind(null, id, false)} confirm="Close joining? New people won't be able to join.">
             <Button type="submit">Close joining</Button>
           </ActionForm>
@@ -156,6 +157,13 @@ export function SettingsSections({ group: g, meId }: { group: GroupView; meId: s
   return (
     <div className="grid items-start gap-6 lg:grid-cols-2">
       <div className="space-y-6">
+        {g.needsRedraw && (
+          <Notice tone="error">
+            A Member left and closing the gap would break an Exclusion. Someone has no person until you Re-draw.
+          </Notice>
+        )}
+        <DrawCard group={g} meId={meId} />
+
         <Card className="space-y-3">
           <h3 className="font-medium">Group details</h3>
           <ActionForm action={updateSettingsAction.bind(null, id)} className="space-y-4">
@@ -170,11 +178,12 @@ export function SettingsSections({ group: g, meId }: { group: GroupView; meId: s
             <p className="text-sm text-neutral-500">The Draw has happened, so joining and participation are fixed.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              <ActionForm action={setJoiningAction.bind(null, id, g.status !== "open")} className="">
-                <Button type="submit" variant="secondary">
-                  {g.status === "open" ? "Close joining" : "Reopen joining"}
-                </Button>
-              </ActionForm>
+              {/* Closing joining lives in the Draw card above; reopening lives here. */}
+              {g.status === "joining_closed" && (
+                <ActionForm action={setJoiningAction.bind(null, id, true)} className="">
+                  <Button type="submit" variant="secondary">Reopen joining</Button>
+                </ActionForm>
+              )}
               {me && (
                 <ActionForm action={setParticipatesAction.bind(null, id, !me.participates)} className="">
                   <Button type="submit" variant="secondary">

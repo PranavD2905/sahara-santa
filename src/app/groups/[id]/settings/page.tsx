@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Page } from "@/components/ui";
 import { SettingsSections } from "../organizer-panel";
@@ -11,10 +10,7 @@ export default async function GroupSettingsPage({ params }: { params: Promise<{ 
   const { g, meId } = loaded;
 
   return (
-    <Page title={`${g.name} · Settings`}>
-      <Link href={`/groups/${id}`} className="text-sm underline">
-        ← Back to {g.name}
-      </Link>
+    <Page backHref={`/groups/${id}`} title={`${g.name} · Settings`}>
       <SettingsSections group={g} meId={meId} />
     </Page>
   );

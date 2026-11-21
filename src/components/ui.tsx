@@ -1,22 +1,30 @@
 import type { ComponentProps, ReactNode } from "react";
+import { BackButton } from "./back-button";
 
 /** Deliberately plain building blocks; the visual theme comes after v1. */
 
 /**
  * Laptop-first: dashboards use the wide layout; single-form pages pass
  * `narrow` so inputs stay a readable width on large screens.
+ * Every screen gets a Back button except the home dashboard (`back={false}`);
+ * `backHref` is where it goes when there's no previous screen.
  */
 export function Page({
   title,
   children,
   narrow = false,
+  back = true,
+  backHref = "/",
 }: {
   title: string;
   children: ReactNode;
   narrow?: boolean;
+  back?: boolean;
+  backHref?: string;
 }) {
   return (
     <main className={`mx-auto w-full px-4 py-8 sm:px-6 lg:px-8 ${narrow ? "max-w-xl" : "max-w-6xl"}`}>
+      {back && <BackButton fallback={backHref} />}
       <h1 className="mb-6 text-2xl font-semibold">{title}</h1>
       <div className="space-y-6">{children}</div>
     </main>
