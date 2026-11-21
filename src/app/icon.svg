@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Santa hat in the Sahara Santa palette: berry red, cream trim, indigo ink. -->
+  <g stroke="#2f2470" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Hat body, flopping over to the right -->
+    <path d="M11 44 C 13 27 22 13 36 10 C 46 8 54 14 55 25 C 50 20 44 20 41 25 C 44 31 46 37 47 44 Z" fill="#a01e32"/>
+    <!-- Shading fold -->
+    <path d="M41 25 C 44 31 46 37 47 44 L 40 44 C 40 36 39 30 41 25 Z" fill="#7d1527" stroke="none"/>
+    <!-- Fur trim -->
+    <rect x="7" y="42" width="45" height="11" rx="5.5" fill="#fff6e6"/>
+    <!-- Pom-pom -->
+    <circle cx="55" cy="26" r="6.5" fill="#fff6e6"/>
+  </g>
+  <!-- A little sand sparkle, like the Reveal's -->
+  <path d="M20 26 Q20 30 22.2 30 Q20 30 20 34 Q20 30 17.8 30 Q20 30 20 26Z" fill="#dcc092"/>
+</svg>
