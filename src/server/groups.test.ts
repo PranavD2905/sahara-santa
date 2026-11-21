@@ -9,8 +9,8 @@ import {
   deleteGroup,
   departAllGroups,
   getGroupView,
-  getInviteContext,
-  parseInviteEmails,
+  myRevealState,
+  requireCanResetPassword,
   joinByCode,
   leaveGroup,
   listMyGroups,
@@ -75,11 +75,17 @@ describe("creating and joining", () => {
     expect(view.inviteCode).toMatch(/^[2-9A-Z]{8}$/);
   });
 
-  it("refuses unverified accounts", async () => {
+  it("needs no email verification (username + password accounts, ADR 0004)", async () => {
     const u = await createUser(db, { emailVerified: false });
-    await expect(createGroup(db, u, settings)).rejects.toMatchObject({ code: "unverified" });
+    await expect(createGroup(db, u, settings)).resolves.toMatchObject({ id: expect.any(String) });
     const { inviteCode } = await groupWith(1);
-    await expect(joinByCode(db, u, inviteCode)).rejects.toMatchObject({ code: "unverified" });
+    await expect(joinByCode(db, u, inviteCode, { now: NOW })).resolves.toMatchObject({
+      alreadyMember: false,
+    });
+  });
+
+  it("refuses an account that doesn't exist", async () => {
+    await expect(createGroup(db, "ghost", settings)).rejects.toMatchObject({ code: "not-found" });
   });
 
   it("limits Groups created per user", async () => {
@@ -143,7 +149,7 @@ describe("the Draw", () => {
     await setJoiningOpen(db, g.organizer, g.groupId, false, { now: NOW });
     const out = await runDraw(db, g.organizer, g.groupId, { now: NOW });
     expect(out.isRedraw).toBe(false);
-    expect(out.notify).toHaveLength(6);
+    expect(out.participants).toBe(6);
     const rows = await assignmentsOf(g.groupId);
     expect(
       validateLoop(g.members, rows, [[g.members[1], g.members[2]]]),
@@ -227,14 +233,20 @@ describe("privacy", () => {
 });
 
 describe("leaving after the Draw", () => {
-  it("patches the loop and reports which Santa to email", async () => {
+  it("patches the loop and makes the affected Santa reveal again", async () => {
     const g = await drawn(5);
     const leaver = g.members[3];
     const santaOfLeaver = (await assignmentsOf(g.groupId)).find(
       (r) => r.receiverId === leaver,
     )!.santaId;
+    await revealMyAssignment(db, santaOfLeaver, g.groupId, { now: NOW });
     const out = await leaveGroup(db, leaver, g.groupId);
-    expect(out).toMatchObject({ kind: "patched", changedSanta: { userId: santaOfLeaver } });
+    expect(out).toEqual({ kind: "patched", changedSantaId: santaOfLeaver });
+    // No email: the app shows "Reveal my person" again instead.
+    expect(await myRevealState(db, santaOfLeaver, g.groupId)).toEqual({
+      hasAssignment: true,
+      revealed: false,
+    });
     const rest = g.members.filter((m) => m !== leaver);
     expect(validateLoop(rest, await assignmentsOf(g.groupId))).toEqual([]);
   });
@@ -284,30 +296,26 @@ describe("leaving after the Draw", () => {
   });
 });
 
-describe("invite by email", () => {
-  it("parses, de-duplicates, and validates addresses", () => {
-    expect(parseInviteEmails("A@x.com, b@y.org;\na@x.com  c@z.in")).toEqual([
-      "a@x.com",
-      "b@y.org",
-      "c@z.in",
-    ]);
-    expect(() => parseInviteEmails("   ")).toThrow(/at least one/);
-    expect(() => parseInviteEmails("ok@x.com, not-an-email")).toThrow(/not-an-email/);
-    const many = Array.from({ length: 21 }, (_, i) => `p${i}@x.com`).join(",");
-    expect(() => parseInviteEmails(many)).toThrow(/at most 20/);
+describe("Organizer password reset (no email recovery)", () => {
+  it("lets the Organizer reset a Member of their own Group", async () => {
+    const g = await groupWith(3);
+    await expect(
+      requireCanResetPassword(db, g.organizer, g.groupId, g.members[1]),
+    ).resolves.toBeUndefined();
   });
 
-  it("only the Organizer can invite, and only while joining is open", async () => {
-    const g = await groupWith(2);
-    const ctx = await getInviteContext(db, g.organizer, g.groupId, { now: NOW });
-    expect(ctx).toMatchObject({ groupName: "Office Santa", inviteCode: g.inviteCode });
-    await expect(getInviteContext(db, g.members[1], g.groupId, { now: NOW })).rejects.toMatchObject({
-      code: "forbidden",
-    });
-    await setJoiningOpen(db, g.organizer, g.groupId, false, { now: NOW });
-    await expect(getInviteContext(db, g.organizer, g.groupId, { now: NOW })).rejects.toMatchObject({
-      code: "conflict",
-    });
+  it("refuses non-Organizers, self-resets, and people outside the Group", async () => {
+    const g = await groupWith(3);
+    const outsider = await createUser(db);
+    await expect(
+      requireCanResetPassword(db, g.members[1], g.groupId, g.members[2]),
+    ).rejects.toMatchObject({ code: "forbidden" });
+    await expect(
+      requireCanResetPassword(db, g.organizer, g.groupId, g.organizer),
+    ).rejects.toMatchObject({ code: "invalid" });
+    await expect(
+      requireCanResetPassword(db, g.organizer, g.groupId, outsider),
+    ).rejects.toMatchObject({ code: "not-found" });
   });
 });
 

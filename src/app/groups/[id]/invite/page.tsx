@@ -14,7 +14,7 @@ export default async function InviteStepPage({ params }: { params: Promise<{ id:
   return (
     <Page narrow backHref={`/groups/${id}`} title={`Invite people to ${g.name}`}>
       <p className="text-sm text-neutral-500">
-        Your Group is ready. Share the link or code, or send email invites. You can come back to this any time from the
+        Your Group is ready. Share the link or code with your friends. You can come back to this any time from the
         Group page.
       </p>
       <InviteCard group={g} inviteUrl={inviteUrl} />

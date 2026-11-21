@@ -3,17 +3,23 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
+import { username } from "better-auth/plugins";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db, schema } from "@/db";
-import { sendEmail } from "@/lib/email";
 import { isDomainError } from "@/server/errors";
 import { departAllGroups } from "@/server/groups";
-import { notifyDeparture } from "@/server/notifications";
 import { pathFromUrl } from "@/server/picture-paths";
 import { deletePicture } from "@/server/pictures";
 
-// BETTER_AUTH_SECRET and BETTER_AUTH_URL are read from the environment by
-// Better Auth itself, so importing this module never needs secrets at build.
+/**
+ * Username + password only, no email (ADR 0004). Better Auth still requires
+ * an `email` column, so sign-up stores an internal placeholder built by
+ * `placeholderEmail()`; it is never shown and never mailed.
+ *
+ * BETTER_AUTH_SECRET and BETTER_AUTH_URL are read from the environment by
+ * Better Auth itself, so importing this module never needs secrets at build.
+ */
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -28,28 +34,8 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: false,
     minPasswordLength: 8,
-    revokeSessionsOnPasswordReset: true,
-    sendResetPassword: async ({ user, url }) => {
-      await sendEmail({
-        to: user.email,
-        subject: "Reset your Sahara Santa password",
-        text: `Hi ${user.name},\n\nReset your password here:\n${url}\n\nIf you didn't ask for this, ignore this email.`,
-      });
-    },
-  },
-
-  emailVerification: {
-    sendOnSignUp: true,
-    autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url }) => {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your Sahara Santa email",
-        text: `Hi ${user.name},\n\nConfirm your email to join Secret Santa groups:\n${url}`,
-      });
-    },
   },
 
   user: {
@@ -58,9 +44,7 @@ export const auth = betterAuth({
       // Leave every Group first so each Draw loop is Patched (ADR 0001).
       beforeDelete: async (u) => {
         try {
-          for (const { groupId, outcome } of await departAllGroups(db, u.id)) {
-            notifyDeparture(groupId, outcome);
-          }
+          await departAllGroups(db, u.id);
         } catch (e) {
           if (isDomainError(e)) throw new APIError("BAD_REQUEST", { message: e.message });
           throw e;
@@ -85,14 +69,14 @@ export const auth = betterAuth({
     enabled: true,
     storage: "database",
     customRules: {
+      "/sign-in/username": { window: 60, max: 5 },
       "/sign-in/email": { window: 60, max: 5 },
-      "/request-password-reset": { window: 300, max: 3 },
-      "/send-verification-email": { window: 300, max: 3 },
+      "/sign-up/email": { window: 60, max: 5 },
     },
   },
 
   // Must be last: lets server actions set auth cookies.
-  plugins: [nextCookies()],
+  plugins: [username({ minUsernameLength: 3, maxUsernameLength: 30 }), nextCookies()],
 });
 
 export type Session = typeof auth.$Infer.Session;
@@ -100,4 +84,18 @@ export type Session = typeof auth.$Infer.Session;
 /** The current session in a Server Component / action, or null. */
 export async function getSession(): Promise<Session | null> {
   return auth.api.getSession({ headers: await headers() });
+}
+
+/**
+ * Sets a new password for `userId` and signs them out everywhere. Callers
+ * must check permission first (an Organizer resetting a Member of their
+ * Group: see `requireCanResetPassword`).
+ */
+export async function setPasswordFor(userId: string, newPassword: string): Promise<void> {
+  const ctx = await auth.$context;
+  if (newPassword.length < 8 || newPassword.length > 128) {
+    throw new Error("Password must be 8–128 characters.");
+  }
+  await ctx.internalAdapter.updatePassword(userId, await ctx.password.hash(newPassword));
+  await db.delete(schema.session).where(eq(schema.session.userId, userId));
 }

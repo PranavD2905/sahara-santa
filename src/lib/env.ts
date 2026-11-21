@@ -10,9 +10,6 @@ const schema = z.object({
   BETTER_AUTH_URL: z.string().url().optional(),
   /** Set automatically by Vercel on every deployment (host only, no scheme). */
   VERCEL_URL: z.string().optional(),
-  /** Optional in development: emails are logged to the console instead. */
-  RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().default("Sahara Santa <onboarding@resend.dev>"),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -20,7 +17,7 @@ export type Env = z.infer<typeof schema>;
 let cached: Env | undefined;
 
 /**
- * Base URL for links in emails and invite links: BETTER_AUTH_URL, else the
+ * Base URL for invite links: BETTER_AUTH_URL, else the
  * Vercel deployment URL (previews), else localhost.
  */
 export function appUrl(): string {

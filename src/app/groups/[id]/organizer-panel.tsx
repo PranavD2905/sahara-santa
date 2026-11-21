@@ -2,16 +2,16 @@ import Link from "next/link";
 import { ActionForm } from "@/components/action-form";
 import { PictureUpload } from "@/components/picture-upload";
 import { Button, Card, Field, Notice } from "@/components/ui";
-import { MAX_INVITES_PER_SEND, type GroupView } from "@/server/groups";
+import type { GroupView } from "@/server/groups";
 import {
   addExclusionAction,
   clearOverridePictureAction,
   deleteGroupAction,
   drawAction,
-  inviteByEmailAction,
   removeExclusionAction,
   removeMemberAction,
   resetInviteAction,
+  resetMemberPasswordAction,
   setBioHiddenAction,
   setJoiningAction,
   setParticipatesAction,
@@ -78,25 +78,10 @@ export function InviteCard({ group: g, inviteUrl }: { group: GroupView; inviteUr
               <Button type="submit" variant="secondary">Reset link</Button>
             </ActionForm>
           </div>
-          <ActionForm
-            action={inviteByEmailAction.bind(null, id)}
-            className="space-y-2 border-t border-neutral-200 pt-3 dark:border-neutral-800"
-          >
-            <label className="block space-y-1">
-              <span className="text-sm font-medium">Invite by email</span>
-              <textarea
-                name="emails"
-                required
-                rows={2}
-                placeholder="friend@example.com, cousin@example.com"
-                className="w-full rounded-md border border-neutral-300 bg-transparent px-3 py-2 text-base dark:border-neutral-700"
-              />
-              <span className="block text-xs text-neutral-500">
-                Separate addresses with commas or new lines (up to {MAX_INVITES_PER_SEND}). Each gets the link and code.
-              </span>
-            </label>
-            <Button type="submit">Send invites</Button>
-          </ActionForm>
+          <p className="text-xs text-neutral-500">
+            Send the link or code to your friends (e.g. on WhatsApp). They create an account with a username and
+            password, then join.
+          </p>
         </>
       ) : (
         <p className="text-sm text-neutral-500">
@@ -126,7 +111,7 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
       {g.status === "joining_closed" && (
         <>
           <p className="text-sm">{participants} participating. A Draw needs at least 3 and an Exchange Date.</p>
-          <ActionForm action={drawAction.bind(null, id)} confirm="Run the Draw now? Everyone will be emailed.">
+          <ActionForm action={drawAction.bind(null, id)} confirm="Run the Draw now? Everyone can then reveal their person.">
             <Button type="submit">Run the Draw</Button>
           </ActionForm>
         </>
@@ -134,7 +119,7 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
       {g.status === "drawn" && (
         <ActionForm
           action={drawAction.bind(null, id)}
-          confirm="Re-draw? Everyone gets a new person and is emailed. This replaces the current Draw."
+          confirm="Re-draw? Everyone gets a new person. This replaces the current Draw."
         >
           <Button type="submit" variant={g.needsRedraw ? "primary" : "secondary"}>Re-draw</Button>
         </ActionForm>
@@ -262,6 +247,24 @@ export function SettingsSections({ group: g, meId }: { group: GroupView; meId: s
                     </div>
                   </div>
                   <PictureUpload upload={uploadOverridePictureAction.bind(null, id, m.userId)} label="Replace picture in this Group" />
+                  <ActionForm
+                    action={resetMemberPasswordAction.bind(null, id, m.userId)}
+                    confirm={`Set a new password for ${m.name}? They'll be signed out everywhere.`}
+                    className="flex flex-wrap items-end gap-2"
+                  >
+                    <div className="min-w-48 flex-1">
+                      <Field
+                        label="Reset password (forgot theirs?)"
+                        name="password"
+                        type="text"
+                        required
+                        minLength={8}
+                        autoComplete="off"
+                        placeholder="New temporary password"
+                      />
+                    </div>
+                    <Button type="submit" variant="secondary">Set password</Button>
+                  </ActionForm>
                 </li>
               ))}
             </ul>

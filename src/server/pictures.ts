@@ -16,7 +16,10 @@ export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 const SIZE = 512;
 const LOCAL_DIR = path.join(process.cwd(), ".data", "uploads");
 
-const blobStorageEnabled = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+// Vercel connects Blob either with a token or via OIDC (BLOB_STORE_ID); the
+// SDK handles both. Neither set = local development.
+const blobStorageEnabled = () =>
+  Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 
 /**
  * Re-encodes to a 512×512 WebP. sharp drops EXIF/GPS metadata unless asked

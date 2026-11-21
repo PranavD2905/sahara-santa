@@ -3,7 +3,7 @@
 Secret Santa web app: sign up, join a Group by invite link, and let the Draw assign who gives to whom.
 Scope: `docs/V1-SCOPE.md` · Vocabulary: `GLOSSARY.md` · Decisions: `docs/adr/`.
 
-Stack: Next.js 16 · Neon Postgres + Drizzle · Better Auth (email + password, verified) · Resend · Vercel Blob (private) · iTunes previews.
+Stack: Next.js 16 · Neon Postgres + Drizzle · Better Auth (username + password, no email) · Vercel Blob (private) · iTunes previews.
 
 ## Run locally (no accounts needed)
 
@@ -17,12 +17,12 @@ DATABASE_URL=postgres://postgres@localhost:5433/postgres npm run db:migrate
 npm run dev               # terminal 2
 ```
 
-Without `RESEND_API_KEY`, emails (verification, Draw) print in the dev server console. Without `BLOB_READ_WRITE_TOKEN`, pictures go to `./.data/uploads`.
+There is no email: sign up with a username. Without `BLOB_READ_WRITE_TOKEN`, pictures go to `./.data/uploads`.
 
 ## Deploy (Vercel)
 
 1. Import the repo in Vercel; add Neon from the Marketplace (sets `DATABASE_URL`).
-2. Set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (production URL), `RESEND_API_KEY`, `EMAIL_FROM` (verified domain); add a private Blob store (sets `BLOB_READ_WRITE_TOKEN`).
+2. Set `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` (production URL); add a private Blob store (sets `BLOB_READ_WRITE_TOKEN`). Full guide: `docs/DEPLOYMENT.md`.
 3. Run `npm run db:migrate` against the Neon URL once.
 
 ## Checks

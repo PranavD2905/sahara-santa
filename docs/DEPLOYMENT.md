@@ -24,6 +24,7 @@ Do the steps in order. Each takes a few minutes.
    vercel login
    vercel link          # choose the sahara-santa project
    cat .vercel/project.json   # → "orgId" and "projectId"
+   # Newer CLIs linked by git write .vercel/repo.json instead: use projects[0].orgId and .id
    ```
 
 ## 2. Database: Neon
@@ -51,23 +52,9 @@ Do the steps in order. Each takes a few minutes.
 3. Optional: on the **Variables** tab, add `MIGRATE_PREVIEW_DB` = `true`, but only after step 2.2.
 4. Optional but recommended: under **Settings → Branches**, add a rule for `main` that requires the **Lint, typecheck, test, build** check to pass.
 
-## 5. Email (Resend): verification, password reset, invites, Draw
+## 5. Email
 
-All emails are already wired up:
-
-- **Create account:** verification email via Better Auth `emailVerification.sendVerificationEmail`. Users can't sign in until they verify.
-- **Forgot password:** reset email via Better Auth `emailAndPassword.sendResetPassword`.
-- **Invite by email:** sent by the Organizer from the Group or Invite page.
-- **Draw, Re-draw, and "your person changed":** sent automatically.
-
-They all go through `src/lib/email.ts`, which uses Resend. To turn them on:
-
-1. Sign up at <https://resend.com>.
-2. **Domains → Add Domain**: use a domain you own, ideally a subdomain such as `mail.yourdomain.com`.
-   Add the DNS records Resend shows (SPF, DKIM, and optionally DMARC) at your registrar, then wait for **Verified**.
-   Without a verified domain, Resend only delivers to the email you signed up with.
-3. **API Keys → Create API Key** with "Sending access" restricted to that domain, then copy the key (`re_…`).
-4. Add the env vars below in step 6.
+Nothing to set up: the app sends no email (ADR 0004). Accounts are username + password; a forgotten password is reset by the Group's Organizer in Group Settings.
 
 ## 6. Vercel environment variables
 
@@ -78,20 +65,17 @@ Go to **Project → Settings → Environment Variables**:
 | `DATABASE_URL` | set by Neon | set by Neon | step 2 |
 | `BLOB_READ_WRITE_TOKEN` | set by Blob | set by Blob | step 3 |
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32` | a **different** random value | signs sessions |
-| `BETTER_AUTH_URL` | `https://your-domain` | **leave unset** | previews then use their own URL for auth and email links |
-| `RESEND_API_KEY` | `re_…` | `re_…` (optional) | without it, emails are only logged |
-| `EMAIL_FROM` | `Sahara Santa <noreply@mail.yourdomain.com>` | same | must be on the verified domain |
+| `BETTER_AUTH_URL` | `https://your-domain` (or your `*.vercel.app` URL) | **leave unset** | previews then use their own URL for auth and invite links |
 
 Changing env vars only affects new deployments, so redeploy afterwards: push to `main`, or re-run the workflow.
 
 ## 7. First production deploy
 
 Merge the PR into `main`. The workflow runs the checks, then `drizzle-kit migrate` against the production database, then deploys.
-To check it worked: sign up on the live site, get the verification email, sign in, create a Group, and send yourself an invite.
+To check it worked: sign up on the live site with a username, create a Group, and open the invite link in a private window to join as a second account.
 
 ## Troubleshooting
 
 - **Workflow says "Project not found":** check `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID`, and that the token can access that team.
-- **No emails arrive:** check Resend → **Logs**. "Domain not verified" means fix the DNS records; also check `EMAIL_FROM` uses that domain.
-- **Verification link goes to the wrong site:** check `BETTER_AUTH_URL` for Production.
+- **Invite links point to the wrong site:** check `BETTER_AUTH_URL` for Production.
 - **Pictures fail to upload:** the Blob store must be **Private** and connected to the project (`BLOB_READ_WRITE_TOKEN`).

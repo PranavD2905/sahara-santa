@@ -15,7 +15,7 @@ The Member who created a Group and controls its rules, joining, and Draw. Partic
 _Avoid_: Host, admin, owner
 
 **Member**:
-A verified, signed-in person who has joined a Group and takes part as a Santa and as a receiver.
+A signed-in person (username + password account) who has joined a Group and takes part as a Santa and as a receiver.
 _Avoid_: Participant, player, user
 
 **Invite Link**:
