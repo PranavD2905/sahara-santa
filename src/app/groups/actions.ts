@@ -34,6 +34,11 @@ async function attempt(fn: () => Promise<string | void>): Promise<ActionState> {
 
 const groupPath = (id: string) => `/groups/${id}`;
 
+/** Organizer changes show on the Group page and its Settings/Invite pages. */
+function revalidateGroup(id: string) {
+  revalidatePath(groupPath(id), "layout");
+}
+
 function intOrNull(v: FormDataEntryValue | null): number | null {
   const s = String(v ?? "").trim();
   if (s === "") return null;
@@ -61,7 +66,8 @@ export async function createGroupAction(_: ActionState, form: FormData): Promise
     ({ id } = await groups.createGroup(db, me, readSettings(form)));
   });
   if (state.error) return state;
-  redirect(groupPath(id));
+  // Step 2 of creating a Group: the Invite page.
+  redirect(`${groupPath(id)}/invite`);
 }
 
 export async function joinAction(code: string): Promise<ActionState> {
@@ -90,14 +96,14 @@ export async function updateSettingsAction(
     await groups.updateSettings(db, me, groupId, readSettings(form));
     return "Saved.";
   });
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
 export async function setJoiningAction(groupId: string, open: boolean): Promise<ActionState> {
   const me = await actor();
   const state = await attempt(() => groups.setJoiningOpen(db, me, groupId, open));
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -107,7 +113,7 @@ export async function resetInviteAction(groupId: string): Promise<ActionState> {
     await groups.resetInviteCode(db, me, groupId);
     return "New invite link created. The old one no longer works.";
   });
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -130,7 +136,7 @@ export async function setParticipatesAction(
 ): Promise<ActionState> {
   const me = await actor();
   const state = await attempt(() => groups.setOrganizerParticipates(db, me, groupId, participates));
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -143,7 +149,7 @@ export async function addExclusionAction(
   const state = await attempt(() =>
     groups.addExclusion(db, me, groupId, String(form.get("a")), String(form.get("b"))),
   );
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -154,7 +160,7 @@ export async function removeExclusionAction(
 ): Promise<ActionState> {
   const me = await actor();
   const state = await attempt(() => groups.removeExclusion(db, me, groupId, a, b));
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -167,7 +173,7 @@ export async function drawAction(groupId: string): Promise<ActionState> {
       ? "Re-draw done. Everyone has been emailed."
       : "The Draw is done. Everyone has been emailed.";
   });
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -191,7 +197,7 @@ export async function removeMemberAction(groupId: string, memberId: string): Pro
     notifyDeparture(groupId, out);
     return departureMessage(out);
   });
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -214,7 +220,7 @@ export async function transferAction(
     await groups.transferOwnership(db, me, groupId, String(form.get("to")));
     return "Ownership transferred.";
   });
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -240,7 +246,7 @@ export async function setBioHiddenAction(
   const state = await attempt(async () => {
     await groups.setOverride(db, me, groupId, memberId, { bioHidden: hidden });
   });
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -264,7 +270,7 @@ export async function uploadOverridePictureAction(
     await deletePicture(pathFromUrl(previousPictureOverrideUrl));
     return "Picture replaced in this Group.";
   });
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
@@ -279,7 +285,7 @@ export async function clearOverridePictureAction(
     });
     await deletePicture(pathFromUrl(previousPictureOverrideUrl));
   });
-  revalidatePath(groupPath(groupId));
+  revalidateGroup(groupId);
   return state;
 }
 
