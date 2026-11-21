@@ -26,7 +26,9 @@ export interface TarotOptions {
   onPhase: (phase: TarotPhase) => void;
   onError: (message: string) => void;
   onAnnounce: (message: string) => void;
-  /** The chosen card starts flipping onto the person (cue for the Reveal sound). */
+  /** The visitor clicked to draw (deck or prompt): cue for the Reveal sound. */
+  onDraw?: () => void;
+  /** The chosen card starts flipping onto the person: cue for the swoosh. */
   onFlip?: () => void;
 }
 
@@ -595,6 +597,7 @@ export function mountTarot(root: HTMLElement, opts: TarotOptions): TarotHandle {
     if (busy || destroyed) return;
     busy = true;
     abort = false;
+    opts.onDraw?.();
     opts.onError("");
     root.classList.remove("is-ready");
     opts.onPhase("drawing");

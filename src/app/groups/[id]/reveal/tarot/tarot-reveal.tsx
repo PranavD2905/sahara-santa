@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BackButton } from "@/components/back-button";
-import { playRevealSound } from "@/lib/sound";
+import { SOUNDS, pauseMusic, playEffect, preloadEffects, stopEffect } from "@/lib/sound";
 import type { RevealView } from "@/server/groups";
 import { revealAction } from "../../../actions";
 import { mountTarot, type TarotHandle, type TarotPerson, type TarotPhase } from "./engine";
@@ -80,12 +80,20 @@ export function TarotReveal({
       },
       onError: setError,
       onAnnounce: setAnnouncement,
-      onFlip: playRevealSound,
+      // The Reveal has its own sound: your mp3 on the click, a swoosh on the flip.
+      onDraw: () => playEffect(SOUNDS.reveal, 0.85),
+      onFlip: () => playEffect(SOUNDS.cardSwoosh, 0.7),
     });
     handleRef.current = handle;
+    // Stop the site's background music while this screen is open.
+    const resumeMusic = pauseMusic();
+    preloadEffects(SOUNDS.reveal, SOUNDS.cardSwoosh);
     return () => {
       handle.destroy();
       handleRef.current = null;
+      stopEffect(SOUNDS.reveal);
+      stopEffect(SOUNDS.cardSwoosh);
+      resumeMusic();
     };
   }, [groupId]);
 

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { isSoundOn, setSoundOn, subscribeSound } from "@/lib/sound";
+import { isMusicPaused, isSoundOn, setSoundOn, subscribeSound } from "@/lib/sound";
 
 /**
  * Drop the theme track at public/audio/background.mp3. Until it exists the
- * player stays silent and the button still mutes the Reveal sound effect.
+ * player stays silent; the button also mutes the Reveal sounds.
  */
 export const BACKGROUND_TRACK = "/audio/background.mp3";
 const VOLUME = 0.35;
@@ -18,13 +18,16 @@ const VOLUME = 0.35;
  */
 export function BackgroundMusic() {
   const on = useSyncExternalStore(subscribeSound, isSoundOn, () => true);
+  // Screens with their own sound (the Reveal) pause the music while open.
+  const paused = useSyncExternalStore(subscribeSound, isMusicPaused, () => false);
+  const shouldPlay = on && !paused;
   const audioRef = useRef<HTMLAudioElement>(null);
   const [missing, setMissing] = useState(false);
 
   useEffect(() => {
     const el = audioRef.current;
     if (!el || missing) return;
-    if (!on) {
+    if (!shouldPlay) {
       el.pause();
       return;
     }
@@ -60,7 +63,7 @@ export function BackgroundMusic() {
       cancelled = true;
       removeUnlock();
     };
-  }, [on, missing]);
+  }, [shouldPlay, missing]);
 
   return (
     <>
