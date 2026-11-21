@@ -6,7 +6,7 @@ How it works once set up:
 | --- | --- |
 | Any PR or push to `main` | Lint, typecheck, tests, build |
 | PR from this repo | Vercel **Preview** deploy; the URL appears in the job summary |
-| Merge/push to `main` | Production DB migrations, then Vercel **Production** deploy |
+| Merge/push to `main` | Vercel **Production** deploy; the Vercel build migrates the DB first (`scripts/vercel-build.sh`) |
 
 Vercel's own Git auto-deploy is turned off (`vercel.json` → `git.deploymentEnabled: false`), so nothing deploys unless the checks pass.
 
@@ -32,7 +32,7 @@ Do the steps in order. Each takes a few minutes.
 1. In the Vercel project, open **Storage → Marketplace → Neon → Add** and connect it to the project.
    This sets `DATABASE_URL` for Production and Preview.
 2. Recommended: in the Neon integration settings, enable **a separate branch for Preview deployments**, so PRs never touch production data.
-   Once Preview has its own database, set the GitHub repo variable `MIGRATE_PREVIEW_DB` to `true` (see step 4) so previews get migrated too.
+   Once Preview has its own database, add a Vercel env var `MIGRATE_PREVIEW_DB=true` for Preview so previews get migrated too.
 
 ## 3. Pictures: Vercel Blob (private)
 
@@ -49,7 +49,6 @@ Do the steps in order. Each takes a few minutes.
    | `VERCEL_ORG_ID` | `orgId` from `.vercel/project.json` |
    | `VERCEL_PROJECT_ID` | `projectId` from `.vercel/project.json` |
 
-3. Optional: on the **Variables** tab, add `MIGRATE_PREVIEW_DB` = `true`, but only after step 2.2.
 4. Optional but recommended: under **Settings → Branches**, add a rule for `main` that requires the **Lint, typecheck, test, build** check to pass.
 
 ## 5. Email
@@ -71,7 +70,7 @@ Changing env vars only affects new deployments, so redeploy afterwards: push to 
 
 ## 7. First production deploy
 
-Merge the PR into `main`. The workflow runs the checks, then `drizzle-kit migrate` against the production database, then deploys.
+Merge the PR into `main`. The workflow runs the checks, then deploys; the Vercel build runs `drizzle-kit migrate` against the production database before `next build`.
 To check it worked: sign up on the live site with a username, create a Group, and open the invite link in a private window to join as a second account.
 
 ## Troubleshooting

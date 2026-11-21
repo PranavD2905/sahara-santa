@@ -2,10 +2,12 @@
 #
 #   every PR and push to main  -> checks (lint, typecheck, tests, build)
 #   PR from this repo          -> Vercel Preview deployment (URL in the job summary)
-#   push to main               -> DB migrations, then Vercel Production deployment
+#   push to main               -> Vercel Production deployment (migrates the DB first)
 #
-# Vercel's own Git auto-deploy is disabled in vercel.json so deploys only
-# happen here, after the checks pass.
+# Vercel builds remotely (scripts/vercel-build.sh) because Secret env vars
+# like DATABASE_URL can't be pulled into Actions. Vercel's own Git
+# auto-deploy is disabled in vercel.json, so deploys only happen here,
+# after the checks pass.
 
 name: CI/CD
 
@@ -65,25 +67,12 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci
       - run: npm install --global vercel@latest
-      - name: Pull Vercel preview settings and env
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Migrate preview database
-        # Only when Preview has its OWN database (e.g. a Neon branch). Never
-        # let a PR migrate production: enable via repo variable once separate.
-        if: vars.MIGRATE_PREVIEW_DB == 'true'
-        run: |
-          set -a; source .vercel/.env.preview.local; set +a
-          npm run db:migrate
-      - run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
       - id: deploy
+        # Builds on Vercel with the Preview env. Preview migrates only when
+        # MIGRATE_PREVIEW_DB=true is set in Vercel (its own database).
         run: |
-          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy --yes --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "### Preview deployed: $url" >> "$GITHUB_STEP_SUMMARY"
 
@@ -97,22 +86,11 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci
       - run: npm install --global vercel@latest
-      - name: Pull Vercel production settings and env
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Migrate production database
-        # Drizzle migrations are additive and tracked, so re-running is safe.
-        run: |
-          set -a; source .vercel/.env.production.local; set +a
-          npm run db:migrate
-      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
       - id: deploy
+        # Builds on Vercel: scripts/vercel-build.sh runs `drizzle-kit migrate`
+        # (tracked and additive, safe to re-run) and then `next build`.
         run: |
-          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "### Production deployed: $url" >> "$GITHUB_STEP_SUMMARY"
