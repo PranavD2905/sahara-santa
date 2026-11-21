@@ -826,17 +826,45 @@ export async function revealMyAssignment(
   };
 }
 
-/** Whether the actor has an Assignment waiting (without revealing it). */
-export async function hasAssignment(
+/** Whether the actor has an Assignment waiting, without revealing it. */
+export async function myRevealState(
   db: AppDb,
   actorId: string,
   groupId: string,
-): Promise<boolean> {
+): Promise<{ hasAssignment: boolean; revealed: boolean }> {
   const [mine] = await db
     .select({ santaId: assignment.santaId })
     .from(assignment)
     .where(and(eq(assignment.groupId, groupId), eq(assignment.santaId, actorId)));
-  return Boolean(mine);
+  const [me] = await db
+    .select({ revealedAt: groupMember.revealedAt })
+    .from(groupMember)
+    .where(and(eq(groupMember.groupId, groupId), eq(groupMember.userId, actorId)));
+  return { hasAssignment: Boolean(mine), revealed: Boolean(me?.revealedAt) };
+}
+
+/** What an invite link shows before joining. Requires the code itself. */
+export async function previewByCode(
+  db: AppDb,
+  code: string,
+  opts: Options = {},
+): Promise<{ groupId: string; name: string; joinable: boolean; memberCount: number } | null> {
+  const now = opts.now ?? new Date();
+  const [g] = await db
+    .select()
+    .from(group)
+    .where(eq(group.inviteCode, code.trim().toUpperCase()));
+  if (!g) return null;
+  const [{ n }] = await db
+    .select({ n: count() })
+    .from(groupMember)
+    .where(eq(groupMember.groupId, g.id));
+  return {
+    groupId: g.id,
+    name: g.name,
+    joinable: g.status === "open" && !isArchived(g.exchangeDate, now) && n < MAX_MEMBERS,
+    memberCount: n,
+  };
 }
 
 // ---------------------------------------------------------------------------
