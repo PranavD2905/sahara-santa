@@ -28,7 +28,7 @@ export default async function RevealPage({ params }: { params: Promise<{ id: str
 
   if (!state.hasAssignment) {
     return (
-      <Page title="No person yet">
+      <Page narrow title="No person yet">
         <Notice>There&apos;s no Assignment for you in this Group right now.</Notice>
         {back}
       </Page>
@@ -39,7 +39,7 @@ export default async function RevealPage({ params }: { params: Promise<{ id: str
   const view = state.revealed ? await revealMyAssignment(db, me.id, id) : null;
 
   return (
-    <Page title="Your person">
+    <Page narrow title="Your person">
       {view ? <ReceiverCard view={view} /> : <RevealButton groupId={id} />}
       {back}
     </Page>

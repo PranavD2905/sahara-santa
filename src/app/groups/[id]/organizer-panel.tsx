@@ -44,7 +44,7 @@ export function OrganizerPanel({
 
   return (
     <>
-      <h2 className="pt-2 text-lg font-semibold">Organizer</h2>
+      <h2 className="text-lg font-semibold">Organizer</h2>
 
       {g.needsRedraw && (
         <Notice tone="error">

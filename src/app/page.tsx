@@ -49,7 +49,7 @@ export default async function Home() {
           You&apos;re not in any Groups yet. Create one, or open an invite link someone sent you.
         </p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {groups.map((g) => (
             <li key={g.id}>
               <Link href={`/groups/${g.id}`}>

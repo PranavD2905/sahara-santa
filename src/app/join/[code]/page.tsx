@@ -13,14 +13,14 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
 
   if (!preview) {
     return (
-      <Page title="Invite link not found">
+      <Page narrow title="Invite link not found">
         <Notice tone="error">This invite link isn&apos;t valid. Ask the Organizer for a new one.</Notice>
       </Page>
     );
   }
 
   return (
-    <Page title={`Join ${preview.name}`}>
+    <Page narrow title={`Join ${preview.name}`}>
       <Card>
         <p className="mb-4">
           {preview.memberCount} {preview.memberCount === 1 ? "Member" : "Members"} so far.

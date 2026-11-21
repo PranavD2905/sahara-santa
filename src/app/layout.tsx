@@ -40,7 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <header className="border-b border-neutral-200 dark:border-neutral-800">
-          <nav className="mx-auto flex w-full max-w-4xl items-center justify-between px-4 py-3">
+          <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3">
             <Link href="/" className="font-semibold">
               Sahara Santa
             </Link>
@@ -49,7 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </Suspense>
           </nav>
         </header>
-        <Suspense fallback={<main className="mx-auto w-full max-w-4xl px-4 py-8 text-neutral-400">Loading…</main>}>
+        <Suspense fallback={<main className="mx-auto w-full max-w-6xl px-4 py-8 text-neutral-400">Loading…</main>}>
           {children}
         </Suspense>
       </body>

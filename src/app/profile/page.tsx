@@ -13,7 +13,7 @@ export default async function ProfilePage() {
   const p = await getProfile(db, me.id);
 
   return (
-    <Page title="Your profile">
+    <Page narrow title="Your profile">
       <Card className="space-y-4">
         <h2 className="font-medium">Picture</h2>
         <div className="flex items-center gap-4">

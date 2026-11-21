@@ -4,7 +4,7 @@ import { goToJoinAction } from "../groups/actions";
 
 export default function JoinWithCodePage() {
   return (
-    <Page title="Join a Group">
+    <Page narrow title="Join a Group">
       <Card>
         <ActionForm action={goToJoinAction} className="space-y-4">
           <Field label="Invite code" name="code" required autoCapitalize="characters" autoComplete="off" />

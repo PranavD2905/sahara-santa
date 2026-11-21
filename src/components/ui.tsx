@@ -2,9 +2,21 @@ import type { ComponentProps, ReactNode } from "react";
 
 /** Deliberately plain building blocks; the visual theme comes after v1. */
 
-export function Page({ title, children }: { title: string; children: ReactNode }) {
+/**
+ * Laptop-first: dashboards use the wide layout; single-form pages pass
+ * `narrow` so inputs stay a readable width on large screens.
+ */
+export function Page({
+  title,
+  children,
+  narrow = false,
+}: {
+  title: string;
+  children: ReactNode;
+  narrow?: boolean;
+}) {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8">
+    <main className={`mx-auto w-full px-4 py-8 sm:px-6 lg:px-8 ${narrow ? "max-w-xl" : "max-w-6xl"}`}>
       <h1 className="mb-6 text-2xl font-semibold">{title}</h1>
       <div className="space-y-6">{children}</div>
     </main>

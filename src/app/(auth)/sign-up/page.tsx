@@ -10,7 +10,7 @@ export default async function SignUpPage({
 }) {
   const next = safeNext((await searchParams).next);
   return (
-    <Page title="Create your account">
+    <Page narrow title="Create your account">
       <SignUpForm next={next} />
       <p className="text-sm">
         Already have an account?{" "}

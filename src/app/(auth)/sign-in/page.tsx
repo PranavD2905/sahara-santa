@@ -10,7 +10,7 @@ export default async function SignInPage({
 }) {
   const next = safeNext((await searchParams).next);
   return (
-    <Page title="Sign in">
+    <Page narrow title="Sign in">
       <SignInForm next={next} />
       <p className="text-sm">
         New here?{" "}
