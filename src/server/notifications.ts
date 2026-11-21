@@ -33,6 +33,21 @@ export function notifyDraw(groupId: string, out: DrawOutcome) {
   );
 }
 
+/** Invite by email: the Group's join link and code. */
+export function notifyInvites(
+  invite: { groupName: string; inviteCode: string; organizerName: string },
+  emails: string[],
+) {
+  const link = `${env().BETTER_AUTH_URL}/join/${invite.inviteCode}`;
+  sendLater(
+    emails.map((to) => ({
+      to,
+      subject: `${invite.organizerName} invited you to ${invite.groupName} on Sahara Santa`,
+      text: `Hi,\n\n${invite.organizerName} invited you to join the Secret Santa Group "${invite.groupName}".\n\nJoin here (sign up first if you're new):\n${link}\n\nOr enter the code ${invite.inviteCode} under "Join with a code".`,
+    })),
+  );
+}
+
 export function notifyDeparture(groupId: string, out: DepartureOutcome) {
   if (out.kind !== "patched") return;
   const s = out.changedSanta;

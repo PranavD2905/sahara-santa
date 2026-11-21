@@ -49,7 +49,7 @@ Answers you did not change during the design interview were taken as accepted.
 
 ## Email
 
-Only three kinds, besides verification and password reset: **Draw done**, **Re-draw**, and **your receiver changed** (sent only to the affected Santa after a Patch). Nothing else is emailed. Date or Budget changes get an in-app notice only.
+Only four kinds, besides verification and password reset: **Draw done**, **Re-draw**, **your receiver changed** (sent only to the affected Santa after a Patch), and **Invite by email** (the Organizer sends the join link and code to up to 20 addresses at a time, only while joining is open). Nothing else is emailed. Date or Budget changes get an in-app notice only.
 
 ## Privacy and data
 

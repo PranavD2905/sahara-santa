@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { getSession } from "@/lib/auth";
 import { isDomainError } from "@/server/errors";
 import * as groups from "@/server/groups";
-import { notifyDeparture, notifyDraw } from "@/server/notifications";
+import { notifyDeparture, notifyDraw, notifyInvites } from "@/server/notifications";
 import { pathFromUrl } from "@/server/picture-paths";
 import { deletePicture, readUpload, storePicture } from "@/server/pictures";
 
@@ -109,6 +109,19 @@ export async function resetInviteAction(groupId: string): Promise<ActionState> {
   });
   revalidatePath(groupPath(groupId));
   return state;
+}
+
+export async function inviteByEmailAction(
+  groupId: string,
+  _: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const me = await actor();
+  return attempt(async () => {
+    const emails = groups.parseInviteEmails(String(form.get("emails") ?? ""));
+    notifyInvites(await groups.getInviteContext(db, me, groupId), emails);
+    return `Invite sent to ${emails.length} ${emails.length === 1 ? "person" : "people"}.`;
+  });
 }
 
 export async function setParticipatesAction(

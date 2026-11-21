@@ -9,6 +9,8 @@ import {
   deleteGroup,
   departAllGroups,
   getGroupView,
+  getInviteContext,
+  parseInviteEmails,
   joinByCode,
   leaveGroup,
   listMyGroups,
@@ -279,6 +281,33 @@ describe("leaving after the Draw", () => {
     const results = await departAllGroups(db, g.members[2]);
     expect(results).toHaveLength(1);
     expect(await listMyGroups(db, g.members[2])).toEqual([]);
+  });
+});
+
+describe("invite by email", () => {
+  it("parses, de-duplicates, and validates addresses", () => {
+    expect(parseInviteEmails("A@x.com, b@y.org;\na@x.com  c@z.in")).toEqual([
+      "a@x.com",
+      "b@y.org",
+      "c@z.in",
+    ]);
+    expect(() => parseInviteEmails("   ")).toThrow(/at least one/);
+    expect(() => parseInviteEmails("ok@x.com, not-an-email")).toThrow(/not-an-email/);
+    const many = Array.from({ length: 21 }, (_, i) => `p${i}@x.com`).join(",");
+    expect(() => parseInviteEmails(many)).toThrow(/at most 20/);
+  });
+
+  it("only the Organizer can invite, and only while joining is open", async () => {
+    const g = await groupWith(2);
+    const ctx = await getInviteContext(db, g.organizer, g.groupId, { now: NOW });
+    expect(ctx).toMatchObject({ groupName: "Office Santa", inviteCode: g.inviteCode });
+    await expect(getInviteContext(db, g.members[1], g.groupId, { now: NOW })).rejects.toMatchObject({
+      code: "forbidden",
+    });
+    await setJoiningOpen(db, g.organizer, g.groupId, false, { now: NOW });
+    await expect(getInviteContext(db, g.organizer, g.groupId, { now: NOW })).rejects.toMatchObject({
+      code: "conflict",
+    });
   });
 });
 

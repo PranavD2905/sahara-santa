@@ -1,9 +1,10 @@
 import { ActionForm } from "@/components/action-form";
 import { PictureUpload } from "@/components/picture-upload";
 import { Button, Card, Field, Notice } from "@/components/ui";
-import type { GroupView } from "@/server/groups";
+import { MAX_INVITES_PER_SEND, type GroupView } from "@/server/groups";
 import {
   addExclusionAction,
+  inviteByEmailAction,
   clearOverridePictureAction,
   uploadOverridePictureAction,
   deleteGroupAction,
@@ -66,6 +67,22 @@ export function OrganizerPanel({
                 <Button type="submit" variant="secondary">Reset link</Button>
               </ActionForm>
             </div>
+            <ActionForm action={inviteByEmailAction.bind(null, id)} className="space-y-2 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+              <label className="block space-y-1">
+                <span className="text-sm font-medium">Invite by email</span>
+                <textarea
+                  name="emails"
+                  required
+                  rows={2}
+                  placeholder="friend@example.com, cousin@example.com"
+                  className="w-full rounded-md border border-neutral-300 bg-transparent px-3 py-2 text-base dark:border-neutral-700"
+                />
+                <span className="block text-xs text-neutral-500">
+                  Separate addresses with commas or new lines (up to {MAX_INVITES_PER_SEND}). Each gets the link and code.
+                </span>
+              </label>
+              <Button type="submit">Send invites</Button>
+            </ActionForm>
           </>
         ) : (
           <p className="text-sm text-neutral-500">Joining is closed, so the invite link doesn&apos;t work.</p>

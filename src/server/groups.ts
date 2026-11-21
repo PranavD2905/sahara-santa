@@ -843,6 +843,54 @@ export async function myRevealState(
   return { hasAssignment: Boolean(mine), revealed: Boolean(me?.revealedAt) };
 }
 
+export const MAX_INVITES_PER_SEND = 20;
+
+/**
+ * Validates a pasted list of addresses for Invite by email: splits on
+ * commas, semicolons and whitespace, lower-cases, de-duplicates.
+ */
+export function parseInviteEmails(raw: string): string[] {
+  const emails = [
+    ...new Set(
+      raw
+        .split(/[\s,;]+/)
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+  if (emails.length === 0) throw new DomainError("invalid", "Enter at least one email address.");
+  if (emails.length > MAX_INVITES_PER_SEND) {
+    throw new DomainError("invalid", `Send at most ${MAX_INVITES_PER_SEND} invites at a time.`);
+  }
+  const bad = emails.filter((e) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || e.length > 254);
+  if (bad.length > 0) {
+    throw new DomainError("invalid", `Not a valid email: ${bad.slice(0, 3).join(", ")}`);
+  }
+  return emails;
+}
+
+/**
+ * What the Organizer needs to email invites. Only while joining is open,
+ * since a closed Group's link wouldn't work.
+ */
+export async function getInviteContext(
+  db: AppDb,
+  actorId: string,
+  groupId: string,
+  opts: Options = {},
+): Promise<{ groupName: string; inviteCode: string; organizerName: string }> {
+  const now = opts.now ?? new Date();
+  const [g] = await db.select().from(group).where(eq(group.id, groupId));
+  if (!g) throw new DomainError("not-found", "Group not found.");
+  requireOrganizer(g, actorId);
+  requireNotArchived(g, now);
+  if (g.status !== "open") {
+    throw new DomainError("conflict", "Reopen joining before sending invites.");
+  }
+  const [o] = await db.select({ name: user.name }).from(user).where(eq(user.id, actorId));
+  return { groupName: g.name, inviteCode: g.inviteCode, organizerName: o?.name ?? "Your Organizer" };
+}
+
 /** What an invite link shows before joining. Requires the code itself. */
 export async function previewByCode(
   db: AppDb,
