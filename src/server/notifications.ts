@@ -1,12 +1,12 @@
 import "server-only";
 import { after } from "next/server";
 import { sendEmail } from "@/lib/email";
-import { env } from "@/lib/env";
+import { appUrl } from "@/lib/env";
 import type { DepartureOutcome, DrawOutcome } from "./groups";
 
-/** The only three non-auth emails in v1 (see docs/V1-SCOPE.md). */
+/** The non-auth emails in v1 (see docs/V1-SCOPE.md and docs/DEPLOYMENT.md). */
 
-const revealUrl = (groupId: string) => `${env().BETTER_AUTH_URL}/groups/${groupId}/reveal`;
+const revealUrl = (groupId: string) => `${appUrl()}/groups/${groupId}/reveal`;
 
 /** Sends after the response so a slow provider never blocks the Draw. */
 function sendLater(messages: Parameters<typeof sendEmail>[0][]) {
@@ -38,7 +38,7 @@ export function notifyInvites(
   invite: { groupName: string; inviteCode: string; organizerName: string },
   emails: string[],
 ) {
-  const link = `${env().BETTER_AUTH_URL}/join/${invite.inviteCode}`;
+  const link = `${appUrl()}/join/${invite.inviteCode}`;
   sendLater(
     emails.map((to) => ({
       to,

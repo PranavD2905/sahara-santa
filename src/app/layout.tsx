@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { SignOutButton } from "@/components/sign-out-button";
 import { getSession } from "@/lib/auth";
 import "./globals.css";
@@ -35,7 +35,9 @@ async function NavUser() {
   );
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+// Explicit type, not Next's generated `LayoutProps`: those globals only exist
+// after `next dev`/`next build`, so a fresh CI checkout can't typecheck them.
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">

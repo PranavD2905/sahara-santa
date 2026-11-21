@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Avatar, Button, Card, Notice, Page } from "@/components/ui";
 import { db } from "@/db";
-import { env } from "@/lib/env";
+import { appUrl } from "@/lib/env";
 import { isDomainError } from "@/server/errors";
 import { getGroupView, myRevealState, type GroupView } from "@/server/groups";
 import { requireUser } from "@/server/session";
@@ -130,7 +130,7 @@ export default async function GroupPage({
             <OrganizerPanel
               group={g}
               meId={me.id}
-              inviteUrl={`${env().BETTER_AUTH_URL}/join/${g.inviteCode}`}
+              inviteUrl={`${appUrl()}/join/${g.inviteCode}`}
             />
           ) : (
             <Card>

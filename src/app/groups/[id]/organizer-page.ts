@@ -1,7 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { env } from "@/lib/env";
+import { appUrl } from "@/lib/env";
 import { isDomainError } from "@/server/errors";
 import { getGroupView, type GroupView } from "@/server/groups";
 import { requireUser } from "@/server/session";
@@ -23,5 +23,5 @@ export async function loadForOrganizer(
     throw e;
   }
   if (!g.isOrganizer) return { redirectTo: `/groups/${id}` };
-  return { g, meId: me.id, inviteUrl: `${env().BETTER_AUTH_URL}/join/${g.inviteCode}` };
+  return { g, meId: me.id, inviteUrl: `${appUrl()}/join/${g.inviteCode}` };
 }
