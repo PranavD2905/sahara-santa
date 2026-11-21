@@ -28,3 +28,8 @@ There is no email: sign up with a username. Without `BLOB_READ_WRITE_TOKEN`, pic
 ## Checks
 
 `npm test` (Draw logic + DB integration on PGlite) · `npm run typecheck` · `npm run lint` · `npm run build`
+
+## Contributors
+
+- **Pranav Deshpande** ([@PranavD2905](https://github.com/PranavD2905)): domain model, Draw logic, auth, Groups, deployment.
+- **Vedansh Vaidya**: frontend, including the tarot Reveal experience (`feature/frontend`, PR #5).
