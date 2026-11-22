@@ -3,21 +3,20 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { getSession, setPasswordFor } from "@/lib/auth";
+import { setPasswordFor } from "@/lib/auth";
 import { isDomainError } from "@/server/errors";
 import * as groups from "@/server/groups";
 import { pathFromUrl } from "@/server/picture-paths";
 import { deletePicture, readUpload, storePicture } from "@/server/pictures";
+import { requireUser } from "@/server/session";
 
 export interface ActionState {
   error?: string;
   message?: string;
 }
 
-async function actor(): Promise<string> {
-  const session = await getSession();
-  if (!session) redirect("/sign-in");
-  return session.user.id;
+async function actor(next = "/"): Promise<string> {
+  return (await requireUser(next)).id;
 }
 
 /** Turns expected DomainErrors into a form message; anything else throws. */
@@ -36,6 +35,7 @@ const groupPath = (id: string) => `/groups/${id}`;
 /** Organizer changes show on the Group page and its Settings/Invite pages. */
 function revalidateGroup(id: string) {
   revalidatePath(groupPath(id), "layout");
+  revalidatePath("/");
 }
 
 function intOrNull(v: FormDataEntryValue | null): number | null {
@@ -59,23 +59,25 @@ function readSettings(form: FormData): groups.GroupSettings {
 // ---------------------------------------------------------------------------
 
 export async function createGroupAction(_: ActionState, form: FormData): Promise<ActionState> {
-  const me = await actor();
+  const me = await actor("/groups/new");
   let id = "";
   const state = await attempt(async () => {
     ({ id } = await groups.createGroup(db, me, readSettings(form)));
   });
   if (state.error) return state;
   // Step 2 of creating a Group: the Invite page.
+  revalidateGroup(id);
   redirect(`${groupPath(id)}/invite`);
 }
 
 export async function joinAction(code: string): Promise<ActionState> {
-  const me = await actor();
+  const me = await actor(`/join/${code}`);
   let groupId = "";
   const state = await attempt(async () => {
     ({ groupId } = await groups.joinByCode(db, me, code));
   });
   if (state.error) return state;
+  revalidateGroup(groupId);
   redirect(groupPath(groupId));
 }
 
@@ -209,6 +211,7 @@ export async function leaveAction(groupId: string): Promise<ActionState> {
     await groups.leaveGroup(db, me, groupId);
   });
   if (state.error) return state;
+  revalidateGroup(groupId);
   redirect("/");
 }
 
@@ -236,6 +239,7 @@ export async function deleteGroupAction(
     groups.deleteGroup(db, me, groupId, String(form.get("confirmName") ?? "")),
   );
   if (state.error) return state;
+  revalidateGroup(groupId);
   redirect("/");
 }
 

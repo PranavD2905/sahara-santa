@@ -8,6 +8,7 @@ import { isDomainError } from "@/server/errors";
 import { pathFromUrl } from "@/server/picture-paths";
 import { deletePicture, readUpload, storePicture } from "@/server/pictures";
 import * as profile from "@/server/profile";
+import { safeNext } from "@/server/session";
 import type { ActionState } from "../groups/actions";
 
 async function actor(): Promise<string> {
@@ -29,13 +30,16 @@ async function attempt(fn: () => Promise<string | void>): Promise<ActionState> {
 
 export async function saveProfileAction(_: ActionState, form: FormData): Promise<ActionState> {
   const me = await actor();
-  return attempt(async () => {
+  const result = await attempt(async () => {
+    await profile.requireProfilePicture(db, me, safeNext(String(form.get("next") ?? "/")));
     await profile.updateProfile(db, me, {
       name: String(form.get("name") ?? ""),
       bio: String(form.get("bio") ?? ""),
     });
     return "Saved.";
   });
+  if (!result.error && form.has("next")) redirect(safeNext(String(form.get("next") ?? "/")));
+  return result;
 }
 
 export async function uploadPictureAction(_: ActionState, form: FormData): Promise<ActionState> {

@@ -132,6 +132,13 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
   const me = g.members.find((m) => m.userId === meId);
   const enoughPeople = participants >= 3;
   const hasDate = Boolean(g.exchangeDate);
+  const missingPictures = g.members.filter((m) => m.participates && !m.image?.trim());
+  const hasPictures = missingPictures.length === 0;
+  const pictureCheck = (
+    <Check ok={hasPictures}>
+      {hasPictures ? "Every participant has a picture" : `Picture needed: ${missingPictures.map((m) => m.name).join(", ")}. Ask them to upload one, or set a group picture in Settings.`}
+    </Check>
+  );
   return (
     <Card className="space-y-4">
       <CardTitle>The Draw</CardTitle>
@@ -143,6 +150,7 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
               {participants} {participants === 1 ? "person" : "people"} in the Draw {enoughPeople ? "" : "(need at least 3)"}
             </Check>
             <Check ok={hasDate}>{hasDate ? "Gift day is set" : "Set a gift day in Settings"}</Check>
+            {pictureCheck}
           </ul>
           <ActionForm action={setJoiningAction.bind(null, id, false)} confirm={{ title: "Close joining?", body: "Nobody new can join after this. You can still reopen joining from Settings until you run the Draw.", confirmLabel: "Close joining" }}>
             <Button type="submit">Close joining</Button>
@@ -156,13 +164,14 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
               {participants} {participants === 1 ? "person" : "people"} in the Draw {enoughPeople ? "" : "(need at least 3)"}
             </Check>
             <Check ok={hasDate}>{hasDate ? "Gift day is set" : "Set a gift day in Settings"}</Check>
+            {pictureCheck}
           </ul>
           <ActionForm action={drawAction.bind(null, id)} confirm={{ title: "Run the Draw?", body: "Everyone in the Draw gets one person to gift. They can reveal them straight away, so let the Group know!", confirmLabel: "Run the Draw" }}>
-            <Button type="submit" size="lg" disabled={!enoughPeople || !hasDate}>
+            <Button type="submit" size="lg" disabled={!enoughPeople || !hasDate || !hasPictures}>
               <Sparkle /> Run the Draw <Sparkle />
             </Button>
           </ActionForm>
-          {(!enoughPeople || !hasDate) && (
+          {(!enoughPeople || !hasDate || !hasPictures) && (
             <p className="text-xs text-muted">Finish the checklist above to unlock the Draw.</p>
           )}
         </>
@@ -177,10 +186,11 @@ function DrawCard({ group: g, meId }: { group: GroupView; meId: string }) {
             action={drawAction.bind(null, id)}
             confirm={{ title: "Re-draw for everyone?", body: "Everyone gets a new person and has to reveal again. The current Draw is replaced and can't be restored.", confirmLabel: "Re-draw", tone: "danger" }}
           >
-            <Button type="submit" variant={g.needsRedraw ? "primary" : "ghost"} size="sm">
+            <Button type="submit" variant={g.needsRedraw ? "primary" : "secondary"} size="sm" disabled={!hasPictures}>
               Re-draw
             </Button>
           </ActionForm>
+          {!hasPictures && <ul>{pictureCheck}</ul>}
         </>
       )}
       {g.status !== "drawn" && me && !me.participates && (

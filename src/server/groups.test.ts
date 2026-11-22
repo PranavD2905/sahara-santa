@@ -26,6 +26,7 @@ import {
   type GroupSettings,
 } from "./groups";
 import { createTestDb, createUser } from "./test-db";
+import { setPicture } from "./profile";
 
 const NOW = new Date("2026-12-01T10:00:00Z");
 const settings: GroupSettings = {
@@ -42,11 +43,11 @@ beforeEach(async () => {
 });
 
 async function groupWith(n: number) {
-  const organizer = await createUser(db);
+  const organizer = await createUser(db, { image: "https://example.test/avatar.webp" });
   const { id, inviteCode } = await createGroup(db, organizer, settings);
   const members = [organizer];
   for (let i = 1; i < n; i++) {
-    const m = await createUser(db);
+    const m = await createUser(db, { image: "https://example.test/avatar.webp" });
     await joinByCode(db, m, inviteCode, { now: NOW });
     members.push(m);
   }
@@ -154,6 +155,34 @@ describe("the Draw", () => {
     expect(
       validateLoop(g.members, rows, [[g.members[1], g.members[2]]]),
     ).toEqual([]);
+  });
+
+  it("blocks Draw without pictures and uses an organizer's replacement on the reveal card", async () => {
+    const g = await groupWith(3);
+    const member = g.members[1];
+    await setPicture(db, member, null);
+    await setJoiningOpen(db, g.organizer, g.groupId, false, { now: NOW });
+    await expect(runDraw(db, g.organizer, g.groupId, { now: NOW })).rejects.toMatchObject({ code: "invalid" });
+    expect(await assignmentsOf(g.groupId)).toHaveLength(0);
+
+    const replacement = "https://example.test/group-picture.webp";
+    await setOverride(db, g.organizer, g.groupId, member, { pictureOverrideUrl: replacement });
+    await runDraw(db, g.organizer, g.groupId, { now: NOW });
+    const rows = await assignmentsOf(g.groupId);
+    const santa = rows.find((row) => row.receiverId === member)!.santaId;
+    expect((await revealMyAssignment(db, santa, g.groupId))?.receiver.image).toBe(replacement);
+
+    await setOverride(db, g.organizer, g.groupId, member, { pictureOverrideUrl: null });
+    await expect(runDraw(db, g.organizer, g.groupId, { now: NOW })).rejects.toMatchObject({ code: "invalid" });
+    expect(await assignmentsOf(g.groupId)).toEqual(rows);
+  });
+
+  it("does not require a picture from an opted-out organizer", async () => {
+    const g = await groupWith(4);
+    await setPicture(db, g.organizer, null);
+    await setOrganizerParticipates(db, g.organizer, g.groupId, false);
+    await setJoiningOpen(db, g.organizer, g.groupId, false, { now: NOW });
+    await expect(runDraw(db, g.organizer, g.groupId, { now: NOW })).resolves.toMatchObject({ participants: 3 });
   });
 
   it("leaves an opted-out Organizer out of the loop", async () => {

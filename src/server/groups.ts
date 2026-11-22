@@ -359,8 +359,9 @@ export async function runDraw(
     }
 
     const participants = await tx
-      .select({ userId: groupMember.userId })
+      .select({ userId: groupMember.userId, name: user.name, image: user.image, pictureOverrideUrl: groupMember.pictureOverrideUrl })
       .from(groupMember)
+      .innerJoin(user, eq(user.id, groupMember.userId))
       .where(and(eq(groupMember.groupId, groupId), eq(groupMember.participates, true)));
 
     const result = draw(
@@ -369,6 +370,11 @@ export async function runDraw(
       opts.rand,
     );
     if (!result.ok) throw new DomainError("invalid", describeDrawError(result.error));
+
+    const missingPictures = participants.filter((p) => !p.pictureOverrideUrl?.trim() && !p.image?.trim());
+    if (missingPictures.length) {
+      throw new DomainError("invalid", `Add a profile or group picture for: ${missingPictures.map((p) => p.name).join(", ")}. Everyone in the Draw needs a picture.`);
+    }
 
     await tx.delete(assignment).where(eq(assignment.groupId, groupId));
     await tx

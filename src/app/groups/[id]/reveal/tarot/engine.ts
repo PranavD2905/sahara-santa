@@ -30,7 +30,18 @@ export interface TarotOptions {
   onDraw?: () => void;
   /** The chosen card starts flipping onto the person: cue for the swoosh. */
   onFlip?: () => void;
+  /** Sound cues timed to the shell-game animation (see TarotCue). */
+  onCue?: (cue: TarotCue) => void;
 }
+
+/**
+ * - riffle: one card flies in the shuffle cascade (13 per pass, fast)
+ * - deal: one card lands in the grid (13, 75 ms apart)
+ * - slide: a pair of cards swaps places in the shell game
+ * - drumroll: the spotlight is about to wander (roll ~2.85 s, then the pick)
+ * - cancel: the Draw was aborted; stop anything still playing
+ */
+export type TarotCue = "riffle" | "deal" | "slide" | "drumroll" | "cancel";
 
 export interface TarotHandle {
   draw(): void;
@@ -256,6 +267,7 @@ export function mountTarot(root: HTMLElement, opts: TarotOptions): TarotHandle {
     check();
     const cascade = async (toX: number, dur: number, gap: number, rz: number) => {
       const seq = [...deck].reverse();
+      seq.forEach((_, idx) => later(() => opts.onCue?.("riffle"), idx * gap * SPEED + 40));
       await Promise.all(
         seq.map((c, idx) => {
           const s0 = { ...c.st };
@@ -285,6 +297,8 @@ export function mountTarot(root: HTMLElement, opts: TarotOptions): TarotHandle {
       dealOrder.map((c, i) => {
         c.cell = i;
         const s = slots[i]!;
+        // The "snap" as each card lands (its overshoot easing settles ~300 ms in).
+        later(() => opts.onCue?.("deal"), (i * 75 + 300) * SPEED);
         return to(c, { x: s.x, y: s.y, z: 12, rz: 360, rx: 0 }, 700, "cubic-bezier(.34,1.3,.64,1)", i * 75);
       }),
     );
@@ -314,6 +328,7 @@ export function mountTarot(root: HTMLElement, opts: TarotOptions): TarotHandle {
       const idx = shuffled([...Array(n).keys()]);
       const pairs: [number, number][] = [[idx[0]!, idx[1]!], [idx[2]!, idx[3]!]];
       if (r > 3) pairs.push([idx[4]!, idx[5]!]);
+      pairs.forEach((_, p) => later(() => opts.onCue?.("slide"), p * 35));
       await Promise.all(
         pairs.flatMap(([a, b]) => {
           const A = cards[a]!;
@@ -326,6 +341,9 @@ export function mountTarot(root: HTMLElement, opts: TarotOptions): TarotHandle {
       );
       check();
     }
+    // Drumroll over the dim (450 ms) + spotlight (2400 ms); its final hit lands
+    // as the chosen card lifts. Skipped with reduced motion (timings shrink).
+    if (!RM) opts.onCue?.("drumroll");
     await Promise.all(cards.map((c) => to(c, { o: 0.5 }, 450, "ease-out")));
     const k = Math.floor(Math.random() * n);
     const chosen = cards.find((c) => c.cell === k)!;
@@ -636,6 +654,7 @@ export function mountTarot(root: HTMLElement, opts: TarotOptions): TarotHandle {
     const person = chosen ? await personP : null;
     if (destroyed) return;
     if (!chosen || !person) {
+      opts.onCue?.("cancel");
       spot.animate([{ opacity: 0 }], { duration: 300, fill: "forwards" });
       await rest(true);
       startIdle();

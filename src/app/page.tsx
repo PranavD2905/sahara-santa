@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { getSession } from "@/lib/auth";
 import { countdown, formatDay } from "@/lib/format";
 import { listMyGroups, type MyGroupSummary } from "@/server/groups";
+import { requireUser } from "@/server/session";
 
 /** One line per Group telling you what happens next. */
 function nextStep(g: MyGroupSummary): { pill: string; tone: "sand" | "ink" | "pine" | "muted"; hint: string } {
@@ -59,6 +60,7 @@ export default async function Home() {
     );
   }
 
+  await requireUser("/");
   const groups = await listMyGroups(db, session.user.id);
   const firstName = session.user.name.split(/\s+/)[0];
 

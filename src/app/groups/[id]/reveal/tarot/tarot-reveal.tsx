@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BackButton } from "@/components/back-button";
-import { SOUNDS, pauseMusic, playEffect, preloadEffects, stopEffect } from "@/lib/sound";
+import { connectRevealMusic, REVEAL_TRACK } from "@/lib/reveal-music";
+import { SOUNDS, pauseMusic, playEffect, preloadEffects, stopAllEffects, stopEffect } from "@/lib/sound";
 import type { RevealView } from "@/server/groups";
 import { revealAction } from "../../../actions";
 import { mountTarot, type TarotHandle, type TarotPerson, type TarotPhase } from "./engine";
@@ -48,6 +49,7 @@ export function TarotReveal({
   fontClassName: string;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const songRef = useRef<HTMLAudioElement>(null);
   const handleRef = useRef<TarotHandle | null>(null);
   const viewRef = useRef<RevealView | null>(initialView);
   const [phase, setPhase] = useState<TarotPhase>("ready");
@@ -59,7 +61,9 @@ export function TarotReveal({
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root) return;
+    const audio = songRef.current;
+    if (!root || !audio) return;
+    const song = connectRevealMusic(audio);
     // A fresh engine always starts at the deck. When Next.js brings this page
     // back from its hidden (Activity) state, React keeps the old state, so
     // reset it too; replaying still lands on the same person (viewRef).
@@ -76,23 +80,41 @@ export function TarotReveal({
       onPhase: (p) => {
         setPhase(p);
         setView(p === "revealed" ? viewRef.current : null);
-        if (p === "revealed") setHasRevealed(true);
+        if (p === "revealed") {
+          setHasRevealed(true);
+        } else if (p === "ready") song.stop();
       },
       onError: setError,
       onAnnounce: setAnnouncement,
-      // The Reveal has its own sound: your mp3 on the click, a swoosh on the flip.
-      onDraw: () => playEffect(SOUNDS.reveal, 0.85),
-      onFlip: () => playEffect(SOUNDS.cardSwoosh, 0.7),
+      // The Reveal has its own sound, all mp3s in public/audio:
+      // a card rustle on the click, card sounds through the shuffle and deal,
+      // a drumroll under the spotlight, and a swoosh as the card flips.
+      onDraw: () => {
+        song.prepare();
+        playEffect(SOUNDS.reveal, { volume: 0.85 });
+      },
+      onCue: (cue) => {
+        if (cue === "riffle") playEffect(SOUNDS.cardDeal, { volume: 0.28, vary: 0.035 });
+        else if (cue === "deal") playEffect(SOUNDS.cardDeal, { volume: 0.5, vary: 0.025 });
+        else if (cue === "slide") playEffect(SOUNDS.cardSlide, { volume: 0.32, vary: 0.035 });
+        else if (cue === "drumroll") playEffect(SOUNDS.drumroll, { volume: 0.5 });
+        else if (cue === "cancel") stopEffect(SOUNDS.drumroll);
+      },
+      onFlip: () => {
+        // Start on the flip cue, with no timeout or animation-completion delay.
+        song.play();
+        playEffect(SOUNDS.cardSwoosh, { volume: 0.7 });
+      },
     });
     handleRef.current = handle;
     // Stop the site's background music while this screen is open.
     const resumeMusic = pauseMusic();
-    preloadEffects(SOUNDS.reveal, SOUNDS.cardSwoosh);
+    preloadEffects(...Object.values(SOUNDS));
     return () => {
       handle.destroy();
       handleRef.current = null;
-      stopEffect(SOUNDS.reveal);
-      stopEffect(SOUNDS.cardSwoosh);
+      stopAllEffects();
+      song.destroy();
       resumeMusic();
     };
   }, [groupId]);
@@ -113,6 +135,7 @@ export function TarotReveal({
 
   return (
     <div ref={rootRef} className={`tr-root ${fontClassName}`} role="region" aria-label="Reveal your person">
+      <audio ref={songRef} src={REVEAL_TRACK} preload="auto" loop />
       <canvas className="tr-sky" aria-hidden="true" />
 
       <div className="tr-back">

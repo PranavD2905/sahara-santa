@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type PointerEvent } from "react";
 import type { ActionState } from "@/app/groups/actions";
-import { Button, Notice, buttonClass } from "./ui";
+import { Button, Notice } from "./ui";
 
 const VIEW = 280; // on-screen crop square, px
 const OUT = 512; // uploaded square, px
@@ -11,6 +11,13 @@ const MAX_INPUT_BYTES = 5 * 1024 * 1024;
 const MAX_ZOOM = 4;
 
 type Upload = (state: ActionState, form: FormData) => Promise<ActionState>;
+
+type PickerWindow = Window & {
+  showOpenFilePicker?: (options: {
+    multiple: boolean;
+    types: { description: string; accept: Record<string, string[]> }[];
+  }) => Promise<{ getFile(): Promise<File> }[]>;
+};
 
 interface Img {
   el: HTMLImageElement;
@@ -32,7 +39,31 @@ export function PictureUpload({ upload, label = "Choose picture" }: { upload: Up
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
+  const [nativeFallback, setNativeFallback] = useState(false);
+  const [viewSize, setViewSize] = useState(VIEW);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const viewSizeRef = useRef(VIEW);
   const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.floor(entry.contentRect.width);
+      if (width < 1) return;
+      const next = Math.min(VIEW, width);
+      const previous = viewSizeRef.current;
+      if (next === previous) return;
+      viewSizeRef.current = next;
+      setViewSize(next);
+      // Preserve the chosen crop when a phone rotates or the viewport changes.
+      setPos((p) => ({ x: p.x * next / previous, y: p.y * next / previous }));
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(
     () => () => {
@@ -42,14 +73,14 @@ export function PictureUpload({ upload, label = "Choose picture" }: { upload: Up
   );
 
   // Scale at which the image just covers the square.
-  const base = img ? VIEW / Math.min(img.w, img.h) : 1;
+  const base = img ? viewSize / Math.min(img.w, img.h) : 1;
   const scale = base * zoom;
 
   const clamp = (x: number, y: number, s = scale) =>
     img
       ? {
-          x: Math.min(0, Math.max(VIEW - img.w * s, x)),
-          y: Math.min(0, Math.max(VIEW - img.h * s, y)),
+          x: Math.min(0, Math.max(viewSize - img.w * s, x)),
+          y: Math.min(0, Math.max(viewSize - img.h * s, y)),
         }
       : { x, y };
 
@@ -57,24 +88,62 @@ export function PictureUpload({ upload, label = "Choose picture" }: { upload: Up
     setError(null);
     setMessage(null);
     if (!file) return;
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return setError("Use a JPG, PNG, or WebP image.");
+    const supported = /^image\/(jpeg|png|webp)$/i.test(file.type) ||
+      ((!file.type || file.type === "application/octet-stream") && /\.(jpe?g|png|webp)$/i.test(file.name));
+    if (!supported) return setError("Use a JPG, PNG, or WebP image.");
     if (file.size > MAX_INPUT_BYTES) return setError("Images must be 5 MB or smaller.");
+    setLoading(true);
     const url = URL.createObjectURL(file);
     const el = new Image();
     el.onload = () => {
-      const s = VIEW / Math.min(el.naturalWidth, el.naturalHeight);
+      const size = viewSizeRef.current;
+      const s = size / Math.min(el.naturalWidth, el.naturalHeight);
       setImg({ el, url, w: el.naturalWidth, h: el.naturalHeight });
       setZoom(1);
       // Start centred.
-      setPos({ x: (VIEW - el.naturalWidth * s) / 2, y: (VIEW - el.naturalHeight * s) / 2 });
+      setPos({ x: (size - el.naturalWidth * s) / 2, y: (size - el.naturalHeight * s) / 2 });
+      setLoading(false);
     };
-    el.onerror = () => setError("That file couldn't be opened as an image.");
+    el.onerror = () => {
+      URL.revokeObjectURL(url);
+      setLoading(false);
+      setError("That file couldn't be opened as an image. Try a JPG, PNG, or WebP photo.");
+    };
     el.src = url;
+  }
+
+  async function choosePicture() {
+    setError(null);
+    const browser = window as PickerWindow;
+    try {
+      // Invoke the browser picker directly in the click, before any await.
+      if (browser.showOpenFilePicker) {
+        const [handle] = await browser.showOpenFilePicker({
+          multiple: false,
+          types: [{ description: "Pictures", accept: {
+            "image/jpeg": [".jpg", ".jpeg"],
+            "image/png": [".png"],
+            "image/webp": [".webp"],
+          } }],
+        });
+        if (handle) onFile(await handle.getFile());
+        return;
+      }
+      const input = fileInputRef.current;
+      if (!input) return;
+      input.value = "";
+      if (typeof input.showPicker === "function") input.showPicker();
+      else input.click();
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setNativeFallback(true);
+      setError("The picker could not open. Choose a file below or drag a photo into this area.");
+    }
   }
 
   function onZoom(next: number) {
     // Zoom around the centre of the square.
-    const c = VIEW / 2;
+    const c = viewSize / 2;
     const ratio = next / zoom;
     setZoom(next);
     setPos(clamp(c - (c - pos.x) * ratio, c - (c - pos.y) * ratio, base * next));
@@ -96,7 +165,7 @@ export function PictureUpload({ upload, label = "Choose picture" }: { upload: Up
     canvas.width = canvas.height = OUT;
     const ctx = canvas.getContext("2d")!;
     ctx.imageSmoothingQuality = "high";
-    const side = VIEW / scale;
+    const side = viewSize / scale;
     ctx.drawImage(img.el, -pos.x / scale, -pos.y / scale, side, side, 0, 0, OUT, OUT);
     const toBlob = (type: string) =>
       new Promise<Blob | null>((res) => canvas.toBlob(res, type, 0.9));
@@ -129,12 +198,33 @@ export function PictureUpload({ upload, label = "Choose picture" }: { upload: Up
   }
 
   return (
-    <div className="space-y-3">
+    <div
+      ref={containerRef}
+      className="min-w-0 space-y-3"
+      data-picture-editor={img || loading || pending ? "active" : undefined}
+      onDragOver={(event) => {
+        if (event.dataTransfer.types.includes("Files")) {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+        }
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        if (!loading && !pending) onFile(event.dataTransfer.files[0]);
+      }}
+      onPaste={(event) => {
+        const file = Array.from(event.clipboardData.files).find((f) => f.type.startsWith("image/"));
+        if (file && !loading && !pending) {
+          event.preventDefault();
+          onFile(file);
+        }
+      }}
+    >
       {img ? (
         <>
           <div
             className="relative mx-auto touch-none select-none overflow-hidden rounded-md border-2 border-ink bg-night"
-            style={{ width: VIEW, height: VIEW, cursor: "grab" }}
+            style={{ width: viewSize, maxWidth: "100%", aspectRatio: "1 / 1", cursor: "grab" }}
             onPointerDown={onDown}
             onPointerMove={onMove}
             onPointerUp={onUp}
@@ -164,31 +254,39 @@ export function PictureUpload({ upload, label = "Choose picture" }: { upload: Up
               step={0.01}
               value={zoom}
               onChange={(e) => onZoom(Number(e.target.value))}
-              className="w-full"
+              className="min-h-11 w-full accent-ink"
             />
           </label>
-          <div className="flex justify-center gap-2">
-            <Button type="button" onClick={save} disabled={pending}>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button type="button" onClick={save} disabled={pending} className="min-h-11 touch-manipulation">
               {pending ? "Saving…" : "Save picture"}
             </Button>
-            <Button type="button" variant="secondary" onClick={() => setImg(null)} disabled={pending}>
+            <Button type="button" variant="secondary" onClick={() => setImg(null)} disabled={pending} className="min-h-11 touch-manipulation">
               Cancel
             </Button>
           </div>
         </>
       ) : (
-        <label className={`cursor-pointer ${buttonClass("secondary")}`}>
-          {label}
+        <div className="space-y-3 rounded-md border border-dashed border-ink/35 p-4">
+          <Button type="button" variant="secondary" onClick={choosePicture} disabled={loading || pending} className="min-h-11 touch-manipulation">
+            {loading ? "Opening picture…" : label}
+          </Button>
+          <p className="text-xs text-muted">You can also drop or paste a photo here. JPG, PNG or WebP, up to 5 MB.</p>
           <input
+            ref={fileInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
+            aria-label={label}
+            tabIndex={nativeFallback ? 0 : -1}
+            disabled={loading || pending}
+            className={nativeFallback ? "block min-h-11 w-full max-w-full text-base text-ink" : "sr-only"}
             onChange={(e) => {
-              onFile(e.target.files?.[0]);
-              e.target.value = "";
+              const file = e.currentTarget.files?.[0];
+              e.currentTarget.value = "";
+              onFile(file);
             }}
           />
-        </label>
+        </div>
       )}
       <Notice tone="error">{error}</Notice>
       <Notice tone="success">{message}</Notice>

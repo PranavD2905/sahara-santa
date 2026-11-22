@@ -9,15 +9,15 @@ Answers you did not change during the design interview were taken as accepted.
 - Neon Postgres via the Vercel Marketplace
 - Better Auth: **username + password**, no email at all (ADR 0004); rate-limited sign-in and sign-up
 - Vercel Blob for Profile Pictures (direct client upload)
-- Site-wide background music (`public/audio/background.mp3`) with a mute button, plus a synthesized Reveal sound
+- Global music slot (`public/audio/background.mp3`, file pending), paused on Reveal. "Socha Hai" (`public/audio/reveal-song.mp3`) starts as the chosen card begins to flip. Recorded card effects accompany the animation.
 - Responsive web, laptop-first, then mobile. **Functional-first, basic UI.** Polish (the warm desert theme) comes after the functionality works.
 
 ## Accounts and Profile
 
 - Sign up with a display name, a username (3–30 letters, numbers, dots or underscores; case-insensitive) and a password (8+ characters). No email, no verification.
 - Forgotten password: the Group's Organizer sets a temporary password for that Member in Group Settings (signs them out everywhere).
-- Profile Picture is optional (initials by default). Instagram-style crop with pan and zoom, stored as a 512×512 WebP, shown as a circle. JPG, PNG or WebP up to 5 MB. EXIF is stripped, and the old file is deleted on replace or account deletion.
-- Bio is up to 150 characters of plain text.
+- A picture is required for profile completion and Draw. An organizer-provided group picture qualifies for that group. The uploader supports crop and zoom, with storage as a 512×512 WebP. JPG, PNG or WebP up to 5 MB. EXIF is stripped, and the old file is deleted on replace or account deletion.
+- Bio is required and contains 1–150 characters of plain text. Users must complete their profile before they enter groups.
 - Pictures are served only to signed-in users who share a Group with that person.
 
 ## Groups
@@ -25,6 +25,8 @@ Answers you did not change during the design interview were taken as accepted.
 - One Organizer per Group, who participates by default (opt-out possible). Ownership can be transferred.
 - The Organizer must transfer ownership or delete the Group before leaving or deleting their account. Deleting a Group needs a typed-name confirmation.
 - Limits: 3–50 Members per Group (3 minimum to Draw), 10 Groups created per user, unlimited Groups joined.
+- Every participant needs a profile picture or an organizer-provided group picture before Draw or Re-draw. Reveal cards use that picture.
+- Signed-in screens update automatically within three seconds of a change. Form edits, confirmations, hidden tabs, and Reveal pause automatic updates.
 - Join via Invite Link or short code. Joining requires signing in. The Organizer can reset the link and remove Members.
 - Budget: one min–max range per Group in INR, USD, EUR or GBP (default INR), not enforced.
 - Exchange Date is optional until the Draw, required before it, and editable after.

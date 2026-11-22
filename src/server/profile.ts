@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import { user } from "@/db/schema";
+import { and, eq, isNotNull } from "drizzle-orm";
+import { groupMember, user } from "@/db/schema";
 import type { AppDb } from "./db-types";
 import { DomainError } from "./errors";
 
@@ -24,6 +24,22 @@ export async function getProfile(db: AppDb, userId: string): Promise<ProfileView
   };
 }
 
+/** A group photo can satisfy the requirement for that existing membership. */
+export async function organizerPicture(db: AppDb, userId: string, destination = "/"): Promise<string | null> {
+  const groupId = /^\/groups\/([^/]+)/.exec(destination)?.[1];
+  if (groupId === "new" || destination.startsWith("/join")) return null;
+  const conditions = [eq(groupMember.userId, userId), isNotNull(groupMember.pictureOverrideUrl)];
+  if (groupId) conditions.push(eq(groupMember.groupId, groupId));
+  const rows = await db.select({ image: groupMember.pictureOverrideUrl }).from(groupMember).where(and(...conditions));
+  return rows.find((row) => row.image?.trim())?.image ?? null;
+}
+
+export async function requireProfilePicture(db: AppDb, userId: string, destination = "/"): Promise<void> {
+  if (!(await getProfile(db, userId)).image?.trim() && !(await organizerPicture(db, userId, destination))) {
+    throw new DomainError("invalid", "Add a profile picture to complete your profile.");
+  }
+}
+
 export async function updateProfile(
   db: AppDb,
   userId: string,
@@ -35,12 +51,15 @@ export async function updateProfile(
   if (name.length < 1 || name.length > NAME_MAX) {
     throw new DomainError("invalid", `Display name must be 1–${NAME_MAX} characters.`);
   }
+  if (!bio) {
+    throw new DomainError("invalid", "Add a bio to complete your profile.");
+  }
   if ([...bio].length > BIO_MAX) {
     throw new DomainError("invalid", `Bio must be at most ${BIO_MAX} characters.`);
   }
   await db
     .update(user)
-    .set({ name, bio: bio === "" ? null : bio, updatedAt: new Date() })
+    .set({ name, bio, updatedAt: new Date() })
     .where(eq(user.id, userId));
 }
 

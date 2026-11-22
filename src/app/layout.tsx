@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Jost, Oswald } from "next/font/google";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
+import { LiveUpdates } from "@/components/live-updates";
 import { BackgroundMusic } from "@/components/background-music";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Avatar } from "@/components/ui";
@@ -28,6 +29,7 @@ async function NavUser() {
   const session = await getSession();
   return session ? (
     <div className="flex items-center gap-2 sm:gap-4">
+      <LiveUpdates />
       <Link
         href="/profile"
         className="flex items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm text-cream/90 hover:bg-cream/10"
@@ -53,8 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="flex min-h-full flex-col">
         <div className="sky-backdrop" aria-hidden="true" />
         <header className="border-b border-sand-lt/15 bg-night/60 backdrop-blur-sm">
-          {/* Right padding keeps the nav clear of the fixed sound button until the screen is wide enough. */}
-          <nav className="mx-auto flex w-full max-w-6xl items-center justify-between py-3 pr-16 pl-4 sm:pr-[4.5rem] sm:pl-6 lg:pl-8 xl:pr-8">
+          <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
             <Link href="/" className="brand-plaque" aria-label="Sahara Santa home">
               Sahara Santa
             </Link>

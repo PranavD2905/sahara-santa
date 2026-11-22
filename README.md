@@ -17,7 +17,13 @@ DATABASE_URL=postgres://postgres@localhost:5433/postgres npm run db:migrate
 npm run dev               # terminal 2
 ```
 
-There is no email: sign up with a username. Background music: put an mp3 at `public/audio/background.mp3` (sound is on by default; visitors mute it with the top-right button). Without `BLOB_READ_WRITE_TOKEN`, pictures go to `./.data/uploads`.
+There is no email: sign up with a username. Without `BLOB_READ_WRITE_TOKEN`, pictures go to `./.data/uploads`.
+
+The global music slot is `public/audio/background.mp3`. This file is pending. It will loop on all screens except Reveal. If the browser blocks autoplay, the first click or tap starts the music. "Socha Hai" uses `public/audio/reveal-song.mp3` and starts as the chosen card begins to flip.
+
+A picture and bio are required to complete a profile. An organizer-provided group picture also qualifies for that group. After users save their profile, the app returns them to their destination. Draw requires a picture for every participant. Cards use the organizer's group picture or the user's profile picture.
+
+Signed-in screens check for changes every three seconds and update without a page reload. Updates pause during form edits, confirmations, and Reveal. Hidden or offline tabs pause these requests.
 
 ## Deploy (Vercel)
 

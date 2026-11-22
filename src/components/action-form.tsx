@@ -2,6 +2,7 @@
 
 import { useActionState, useRef, useState, type ReactNode } from "react";
 import type { ActionState } from "@/app/groups/actions";
+import { LIVE_MUTATION_EVENT } from "@/lib/live-updates";
 import { ConfirmDialog, normalizeConfirm, type ConfirmSpec } from "./confirm-dialog";
 import { Notice } from "./ui";
 
@@ -27,9 +28,15 @@ export function ActionForm({
   confirm?: ConfirmSpec;
   className?: string;
 }) {
-  const [state, formAction, pending] = useActionState(action, {});
-  const [asking, setAsking] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const [state, formAction, pending] = useActionState(async (previous: ActionState, form: FormData) => {
+    const result = await action(previous, form);
+    if (!result.error) {
+      window.dispatchEvent(new CustomEvent(LIVE_MUTATION_EVENT, { detail: formRef.current }));
+    }
+    return result;
+  }, {});
+  const [asking, setAsking] = useState(false);
   const confirmed = useRef(false);
   const spec = confirm ? normalizeConfirm(confirm) : null;
 
