@@ -1,16 +1,17 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button, Card, Field, Notice } from "@/components/ui";
 import { authClient, placeholderEmail } from "@/lib/auth-client";
+import { navigateAfterAuthentication } from "@/lib/auth-navigation";
 
 export function SignUpForm({ next }: { next: string }) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const submitting = useRef(false);
 
   async function onSubmit(form: FormData) {
+    if (submitting.current) return;
     setError(null);
     const password = String(form.get("password"));
     if (password !== String(form.get("confirm"))) {
@@ -18,24 +19,30 @@ export function SignUpForm({ next }: { next: string }) {
       return;
     }
     const username = String(form.get("username")).trim().toLowerCase();
+    submitting.current = true;
     setPending(true);
-    const { error } = await authClient.signUp.email({
-      name: String(form.get("name")).trim(),
-      username,
-      email: placeholderEmail(username),
-      password,
-    });
-    setPending(false);
-    if (error) {
-      setError(
-        error.code === "USERNAME_IS_ALREADY_TAKEN" || error.code === "USER_ALREADY_EXISTS"
-          ? "That username is taken. Try another."
-          : (error.message ?? "Sign up failed."),
-      );
-      return;
+    try {
+      const { error } = await authClient.signUp.email({
+        name: String(form.get("name")).trim(),
+        username,
+        email: placeholderEmail(username),
+        password,
+      });
+      if (error) {
+        setError(
+          error.code === "USERNAME_IS_ALREADY_TAKEN" || error.code === "USER_ALREADY_EXISTS"
+            ? "That username is taken. Try another."
+            : (error.message ?? "Sign up failed."),
+        );
+      } else {
+        navigateAfterAuthentication(next);
+        return;
+      }
+    } catch {
+      setError("Could not complete sign-up. Check your connection and try again.");
     }
-    router.replace(next);
-    router.refresh();
+    submitting.current = false;
+    setPending(false);
   }
 
   return (

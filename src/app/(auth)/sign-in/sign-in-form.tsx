@@ -1,29 +1,36 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button, Card, Field, Notice } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
+import { navigateAfterAuthentication } from "@/lib/auth-navigation";
 
 export function SignInForm({ next }: { next: string }) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const submitting = useRef(false);
 
   async function onSubmit(form: FormData) {
+    if (submitting.current) return;
     setError(null);
+    submitting.current = true;
     setPending(true);
-    const { error } = await authClient.signIn.username({
-      username: String(form.get("username")).trim().toLowerCase(),
-      password: String(form.get("password")),
-    });
-    setPending(false);
-    if (error) {
-      setError(error.status === 429 ? "Too many attempts. Wait a minute and try again." : "Wrong username or password.");
-      return;
+    try {
+      const { error } = await authClient.signIn.username({
+        username: String(form.get("username")).trim().toLowerCase(),
+        password: String(form.get("password")),
+      });
+      if (error) {
+        setError(error.status === 429 ? "Too many attempts. Wait a minute and try again." : "Wrong username or password.");
+      } else {
+        navigateAfterAuthentication(next);
+        return;
+      }
+    } catch {
+      setError("Could not sign in. Check your connection and try again.");
     }
-    router.replace(next);
-    router.refresh();
+    submitting.current = false;
+    setPending(false);
   }
 
   return (
